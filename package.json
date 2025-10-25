@@ -1,19 +1,23 @@
 {
-  "name": "tin-backend",
+  "name": "projetofullstack",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Projeto Fullstack DevHub para logs de desenvolvedores.",
+  "main": "app.js",
   "scripts": {
-    "start": "node --watch src/app.js",
+    "start": "node app.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "nodejs",
+    "express",
+    "mysql"
+  ],
+  "author": "Seu Nome Aqui",
   "license": "ISC",
-  "type": "module",
   "dependencies": {
+    "body-parser": "^1.20.2",
     "cors": "^2.8.5",
-    "express": "^5.1.0",
-    "mysql2": "^3.15.3"
+    "express": "^4.18.2",
+    "mysql2": "^3.9.1"
   }
 }

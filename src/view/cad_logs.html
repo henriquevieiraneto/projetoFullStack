@@ -3,103 +3,96 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Cadastro de Logs - DevHub</title>
-    <link rel="stylesheet" href="../style/style.css"> 
+    <title>Cadastro de Log - DevHub</title>
+    <link rel="stylesheet" href="../style/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/css/bootstrap.min.css">
+    
+    <style>
+        body { background-color: #f8f9fa; }
+    </style>
 </head>
 <body>
 
-    <script>
-        const usuarioLogado = localStorage.getItem('usuarioLogado');
-        if (!usuarioLogado) {
-            alert("Você não está logado. Redirecionando para a tela de cadastro/login.");
-            window.location.href = 'cad_usuario.html'; 
-        }
-        const usuario = JSON.parse(usuarioLogado);
-    </script>
-
-    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
-        <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="index.html">DevHub - Cadastro de Log</a>
-            <a href="index.html" class="btn btn-sm btn-secondary ms-auto">Cancelar e Voltar</a>
-        </div>
-    </nav>
-
     <div class="container mt-5">
-        <h1 class="mb-4 text-center">Cadastro de Logs</h1>
+        <h1 class="mb-4 text-center">Registrar Novo Log</h1>
         
-        <form id="frmCadLogs">
-            <h3 class="text-center mb-4">Registrar Progresso</h3>
+        <form id="frmCadLog">
+            <h3 class="text-center mb-4">Detalhes do Log</h3>
 
             <div class="mb-3">
-                <label for="inputCategoria" class="form-label">Categoria</label>
-                <select class="form-select" id="inputCategoria" required>
-                    <option value="">Selecione uma Categoria</option>
-                    <option value="Programacao">Programação</option>
-                    <option value="Arte 3D/2D">Arte 3D/2D</option>
-                    <option value="Sound Design">Sound Design</option>
-                    <option value="Design de Nível">Design de Nível</option>
-                </select>
-            </div>
-
-            <div class="mb-3">
-                <label for="inputTitulo" class="form-label">Título do Log</label>
-                <input type="text" class="form-control" id="inputTitulo" required>
+                <label for="inputData" class="form-label">Data do Log</label>
+                <input type="date" class="form-control" id="inputData" required>
             </div>
             
             <div class="mb-3">
-                <label for="inputDescricao" class="form-label">Descrição Detalhada do Trabalho</label>
+                <label for="inputHoras" class="form-label">Horas Trabalhadas (em horas)</label>
+                <input type="number" class="form-control" id="inputHoras" step="0.1" min="0.1" required>
+            </div>
+
+            <div class="mb-3">
+                <label for="inputDescricao" class="form-label">Descrição do Trabalho</label>
                 <textarea class="form-control" id="inputDescricao" rows="3" required></textarea>
             </div>
+            
+            <button type="submit" class="btn btn-success w-100">Registrar Log</button>
 
-            <div class="row mb-4">
-                <div class="col-md-4">
-                    <label for="inputHoras" class="form-label">Horas Trabalhadas</label>
-                    <input type="number" class="form-control" id="inputHoras" min="0" step="0.5" value="0">
-                </div>
-                <div class="col-md-4">
-                    <label for="inputLinhas" class="form-label">Linhas de Código</label>
-                    <input type="number" class="form-control" id="inputLinhas" min="0" value="0">
-                </div>
-                <div class="col-md-4">
-                    <label for="inputBugs" class="form-label">Bugs Corrigidos</label>
-                    <input type="number" class="form-control" id="inputBugs" min="0" value="0">
-                </div>
-            </div>
-
-            <button type="submit" class="btn btn-primary w-100">Cadastrar Log</button>
-            <div id="mensagem" class="mt-3 text-center small"></div>
+            <p class="text-center mt-3 small">
+                <a href="index.html">Voltar para o Dashboard</a>.
+            </p>
+            
+            <div id="mensagemLog" class="mt-3 text-center small"></div>
         </form>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/js/bootstrap.bundle.min.js"></script>
     <script>
-        document.getElementById('frmCadLogs').addEventListener('submit', async (e) => {
+        // CORREÇÃO: Variável 'usuario' deve ser definida e verificada
+        const usuarioData = sessionStorage.getItem("usuario");
+        
+        // 1. VERIFICAÇÃO DE LOGIN E CORREÇÃO DO 'usuario is not defined'
+        if (!usuarioData) {
+            alert('Você precisa estar logado para registrar um log. Redirecionando...');
+            window.location.href = 'login.html';
+        }
+
+        let usuario;
+        try {
+            usuario = JSON.parse(usuarioData);
+        } catch (e) {
+            // Se o JSON estiver inválido ou vazio
+            alert('Erro nos dados de usuário. Faça login novamente.');
+            window.location.href = 'login.html';
+        }
+
+        // Se o objeto usuário for válido, mas não tiver o ID
+        if (!usuario || !usuario.id) {
+            alert('Dados de usuário incompletos. Faça login novamente.');
+            window.location.href = 'login.html';
+        }
+
+        document.getElementById('frmCadLog').addEventListener('submit', async (e) => {
             e.preventDefault();
 
-            const mensagemDiv = document.getElementById('mensagem');
+            const mensagemDiv = document.getElementById('mensagemLog');
             const btnSubmit = e.target.querySelector('button[type="submit"]');
 
-            // 1. Coleta dos dados do formulário
+            // 2. Coleta dos dados do formulário
             const dadosLog = {
-                titulo: document.getElementById('inputTitulo').value,
-                categoria: document.getElementById('inputCategoria').value,
-                descricao_do_trabalho: document.getElementById('inputDescricao').value,
-                horas_trabalhadas: parseFloat(document.getElementById('inputHoras').value) || 0,
-                linhas_codigo: parseInt(document.getElementById('inputLinhas').value) || 0,
-                bugs_corrigidos: parseInt(document.getElementById('inputBugs').value) || 0,
-                // O ID do usuário logado é ESSENCIAL para vincular o log
-                id_user: usuario.id 
+                data_log: document.getElementById('inputData').value,
+                horas_trabalhadas: parseFloat(document.getElementById('inputHoras').value),
+                descricao: document.getElementById('inputDescricao').value,
+                // CHAVE CRÍTICA: ID do usuário logado
+                id_usuario: usuario.id 
             };
 
-            // 2. Trava o botão para evitar cliques duplos
+            // 3. Trava o botão e exibe mensagem
             btnSubmit.disabled = true;
             btnSubmit.textContent = 'Enviando...';
             mensagemDiv.className = 'mt-3 text-center small text-info';
-            mensagemDiv.textContent = 'Processando o registro do seu log...';
+            mensagemDiv.textContent = 'Registrando log no servidor...';
 
             try {
-                // 3. Envio dos dados para a API (POST /logs)
+                // Rota que deve estar no seu app.js
                 const response = await fetch('http://localhost:3000/logs', {
                     method: 'POST',
                     headers: {
@@ -108,27 +101,35 @@
                     body: JSON.stringify(dadosLog)
                 });
 
-                if (response.ok) {
-                    // Log cadastrado com sucesso (201 Created)
-                    mensagemDiv.className = 'mt-3 text-center small text-success';
-                    mensagemDiv.textContent = 'Log cadastrado com sucesso! Redirecionando...';
-                    
-                    // 4. REDIRECIONAMENTO PARA A PÁGINA INICIAL
-                    setTimeout(() => {
-                        window.location.href = 'index.html';
-                    }, 1500); 
-
-                } else {
-                    // Erro ao cadastrar (ex: 400 Bad Request, 500 Internal Server Error)
-                    const errorData = await response.json().catch(() => ({ error: 'Erro desconhecido' }));
-                    throw new Error(errorData.error || `Falha no servidor: ${response.status}`);
+                let data;
+                try {
+                    data = await response.json();
+                } catch (e) {
+                    data = { message: response.statusText };
                 }
+
+                if (response.ok) {
+                    // Log de sucesso
+                    mensagemDiv.className = 'mt-3 text-center small text-success';
+                    mensagemDiv.textContent = 'Log registrado com sucesso!';
+                    
+                    // Limpa o formulário após o sucesso
+                    e.target.reset();
+                    
+                } else {
+                    // Erro de servidor (ex: 500)
+                    mensagemDiv.className = 'mt-3 text-center small text-danger';
+                    mensagemDiv.textContent = `Falha no registro: ${data.message || `Erro desconhecido. Status: ${response.status}`}.`;
+                }
+
             } catch (error) {
-                console.error("Erro ao cadastrar log:", error);
+                console.error("Erro ao registrar log:", error);
                 mensagemDiv.className = 'mt-3 text-center small text-danger';
-                mensagemDiv.textContent = `Falha no cadastro: ${error.message}.`;
+                mensagemDiv.textContent = `Falha na conexão: ${error.message}. Verifique se o Node.js está rodando.`;
+            } finally {
+                // 5. Destrava o botão
                 btnSubmit.disabled = false;
-                btnSubmit.textContent = 'Cadastrar Log';
+                btnSubmit.textContent = 'Registrar Log';
             }
         });
     </script>

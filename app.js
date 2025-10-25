@@ -1,357 +1,269 @@
-import express from "express";
-import cors from "cors";
-import mysql from "mysql2/promise";
-import path from 'path'; 
-import { fileURLToPath } from 'url'; 
-
-// ----------------------------------------------------
-// Configuração do __dirname para ES Modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-// ----------------------------------------------------
-
-// Configuração do Pool de Conexão com o Banco de Dados
-const pool = await mysql.createConnection({
-    host: "localhost",
-    user: "root",
-    password: "senai",
-    database: "devhub", // Nome do seu banco de dados
-});
+// 1. IMPORTAÇÃO DE MÓDULOS ESSENCIAIS
+const express = require('express');
+const bodyParser = require('body-parser');
+const cors = require('cors'); // Para permitir requisições do Frontend
+const mysql = require('mysql2'); // Usaremos mysql2 para melhor performance
 
 const app = express();
+const port = 3000;
 
-// MIDDLEWARES GERAIS
-app.use(express.json()); 
-app.use(cors()); 
+// 2. CONFIGURAÇÃO DO MIDDLEWARE
+// Permite que o servidor processe dados JSON e formulários
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: true }));
 
-// SERVINDO ARQUIVOS ESTÁTICOS (FRONTEND)
-app.use(express.static(path.join(__dirname, 'src')));
+// Configuração do CORS para permitir que o Frontend (porta 3000 ou 5500) acesse o Backend
+// O Frontend *deve* acessar pela porta 3000, mas o CORS é um bom backup.
+app.use(cors({
+    origin: ['http://localhost:3000', 'http://127.0.0.1:5500'],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,
+}));
 
-// ROTA DE TESTE SIMPLES
-app.get("/", (req, res) => {
-    // Acessível via: http://localhost:3000/
-    res.send("Servidor da API rodando. Acesse /view/index.html para o frontend."); //
+// 3. CONFIGURAÇÃO DA CONEXÃO COM O BANCO DE DADOS (MySQL)
+// AS CREDENCIAIS FORAM ATUALIZADAS COM A NOVA SENHA: @Hvn2009
+const pool = mysql.createPool({
+    connectionLimit: 10,
+    host: 'localhost', 
+    user: 'root', // Usuário padrão do MySQL/XAMPP
+    password: '@Hvn2009', // <--- NOVA SENHA APLICADA AQUI
+    database: 'devhub' // Nome do banco criado via dump.sql
+}).promise(); // Usando .promise() para permitir async/await nas consultas
+
+// Rota estática para servir os arquivos HTML, CSS e JS do Frontend
+app.use('/view', express.static('src/view'));
+app.use('/style', express.static('src/style'));
+
+// Rota principal para redirecionar para o dashboard
+app.get('/', (req, res) => {
+    res.redirect('/view/index.html');
 });
 
-// =========================================================================
-// ROTAS DE USUÁRIOS
-// =========================================================================
 
-// ... Rotas GET, GET/:id, POST, PUT, DELETE /usuarios (Mantidas) ...
-app.get("/usuarios", async (req, res) => {
+// =================================================================
+// ROTAS DE AUTENTICAÇÃO
+// =================================================================
+
+// 4. POST /cadastro - CADASTRO DE NOVO USUÁRIO
+app.post('/cadastro', async (req, res) => {
+    const { nome, email, senha } = req.body;
+
+    // NOTA: Em um projeto real, a senha deveria ser hasheada aqui (ex: com bcrypt)
+    // Para simplificar, armazenaremos a senha como texto puro (TESTE)
+
+    const query = 'INSERT INTO usuario (nome, email, senha) VALUES (?, ?, ?)';
     try {
-      const [results] = await pool.query("SELECT id, nome, idade, email FROM usuario");
-      res.send(results);
+        const [results] = await pool.query(query, [nome, email, senha]);
+        res.status(201).json({ message: 'Usuário cadastrado com sucesso!', id: results.insertId });
     } catch (error) {
-      console.error("Erro ao listar usuários:", error);
-      res.status(500).send("Erro interno do servidor.");
-    }
-});
-
-app.get("/usuarios/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const [results] = await pool.query(
-        "SELECT id, nome, idade, email FROM usuario WHERE id=?",
-        id
-      );
-      if (results.length === 0) {
-        return res.status(404).send("Usuário não encontrado.");
-      }
-      res.send(results[0]);
-    } catch (error) {
-      console.error("Erro ao buscar usuário:", error);
-      res.status(500).send("Erro interno do servidor.");
-    }
-});
-
-app.post("/usuarios", async (req, res) => {
-    try {
-      const { nome, idade, email, senha } = req.body;
-      const [results] = await pool.query(
-        "INSERT INTO usuario (nome, idade, email, senha) VALUES (?, ?, ?, ?)",
-        [nome, idade, email, senha]
-      );
-  
-      const [usuarioCriado] = await pool.query(
-        "SELECT id, nome, idade, email FROM usuario WHERE id=?",
-        results.insertId
-      );
-  
-      return res.status(201).json(usuarioCriado[0]);
-    } catch (error) {
-      console.error("Erro ao criar usuário:", error);
-      if (error.code === 'ER_DUP_ENTRY') {
-          return res.status(409).send("E-mail já cadastrado.");
-      }
-      res.status(500).send("Erro interno do servidor.");
-    }
-});
-
-app.delete("/usuarios/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const [results] = await pool.query(
-        "DELETE FROM usuario WHERE id=?",
-        id
-      );
-      if (results.affectedRows === 0) {
-          return res.status(404).send("Usuário não encontrado para exclusão.");
-      }
-      res.status(200).send("Usuário deletado com sucesso.");
-    } catch (error) {
-      console.error("Erro ao deletar usuário:", error);
-      res.status(500).send("Erro interno do servidor.");
-    }
-});
-
-app.put("/usuarios/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const { nome, idade } = req.body;
-      const [results] = await pool.query(
-        "UPDATE usuario SET nome = ?, idade = ? WHERE id = ?; ",
-        [nome, idade, id]
-      );
-      
-      if (results.affectedRows === 0) {
-          return res.status(404).send("Usuário não encontrado para atualização.");
-      }
-  
-      res.status(200).send("Usuário atualizado com sucesso.");
-    } catch (error) {
-      console.error("Erro ao atualizar usuário:", error);
-      res.status(500).send("Erro interno do servidor.");
-    }
-});
-// =========================================================================
-// ROTAS DE REGISTRO E LOGIN (Mantidas)
-// =========================================================================
-
-/* Cadastro de usuário (Rota de Registro) */
-app.post("/registrar", async (req, res) => {
-    try {
-        const { nome, idade, email, senha } = req.body;
-        
-        const [results] = await pool.query(
-          "INSERT INTO usuario (nome, idade, email, senha) VALUES (?, ?, ?, ?)",
-          [nome, idade, email, senha]
-        );
-    
-        const [usuarioCriado] = await pool.query(
-          "SELECT id, nome, idade, email FROM usuario WHERE id=?",
-          results.insertId
-        );
-    
-        return res.status(201).json(usuarioCriado[0]);
-      } catch (error) {
-        console.error("Erro ao registrar usuário:", error);
         if (error.code === 'ER_DUP_ENTRY') {
-            return res.status(409).send("E-mail já cadastrado.");
+            return res.status(409).json({ message: 'Email já cadastrado.' });
         }
-        res.status(500).send("Erro interno do servidor.");
-      }
-});
-
-/* LOGIN */
-app.post("/login", async (req, res) => {
-    try {
-      const { email, senha } = req.body;
-  
-      const [usuario] = await pool.query(
-        "Select id, nome, idade, email from usuario WHERE email=? AND senha=?",
-        [email, senha]
-      );
-  
-      if (usuario.length > 0) {
-        return res.status(200).json({
-          message: "Usuário logado com sucesso.",
-          dados: usuario[0],
-        });
-      } else {
-        return res.status(401).send("Email ou senha inválidos.");
-      }
-    } catch (error) {
-      console.error("Erro no login:", error);
-      res.status(500).send("Erro interno do servidor.");
+        console.error('Erro ao cadastrar usuário:', error);
+        res.status(500).json({ message: 'Erro interno ao cadastrar.' });
     }
 });
 
-// =========================================================================
-// ROTAS DE LOGS
-// =========================================================================
-
-/* * [MUDANÇA CRÍTICA]
- * Listagem de logs com paginação, filtro e nome de usuário
- */
-app.get("/logs", async (req, res) => {
+// 5. POST /login - LOGIN DE USUÁRIO
+app.post('/login', async (req, res) => {
+    const { email, senha } = req.body;
+    
+    const query = 'SELECT id, nome, senha FROM usuario WHERE email = ?';
+    
     try {
-        const { pagina, quantidade, categoria, q } = req.query; // 'q' é a query de pesquisa de texto
-        
-        const page = Number(pagina) || 1;
-        const limit = Number(quantidade) || 10;
-        const offset = (page - 1) * limit;
+        const [rows] = await pool.query(query, [email]);
 
-        let whereClauses = [];
-        let queryParams = [];
-
-        // Filtro por Categoria
-        if (categoria) {
-            whereClauses.push("lgs.categoria = ?");
-            queryParams.push(categoria);
+        if (rows.length === 0) {
+            return res.status(401).json({ message: 'Credenciais inválidas.' });
         }
 
-        // Filtro por Pesquisa de Texto (Nome/Descrição/Título)
-        if (q) {
-            const likeTerm = `%${q}%`;
-            whereClauses.push("(u.nome LIKE ? OR lgs.descricao_do_trabalho LIKE ?)");
-            queryParams.push(likeTerm, likeTerm);
+        const user = rows[0];
+
+        // Comparação da senha (texto puro vs. texto puro - simplificado)
+        if (user.senha === senha) {
+            // Sucesso! Retorna dados básicos (NÃO inclua a senha!)
+            return res.status(200).json({ 
+                message: 'Login bem-sucedido!',
+                id: user.id,
+                nome: user.nome
+            });
+        } else {
+            return res.status(401).json({ message: 'Credenciais inválidas.' });
         }
 
-        const whereString = whereClauses.length > 0 ? `WHERE ${whereClauses.join(' AND ')}` : '';
-        
-        // Consulta SQL (Melhorada para incluir o nome do usuário e a data de registro)
-        const queryLogs = `
-            SELECT 
-                lgs.id, 
-                lgs.categoria, 
-                lgs.horas_trabalhadas, 
-                lgs.linhas_codigo, 
-                lgs.bugs_corrigidos, 
-                lgs.id_user,
-                lgs.data_registro,
-                u.nome AS usuario_nome, -- Adiciona o nome do usuário
-                COUNT(devhub.like.id) AS likes_count
-            FROM lgs 
-            INNER JOIN usuario u ON u.id = lgs.id_user -- Garante que apenas logs com usuário existam
-            LEFT JOIN devhub.like ON devhub.like.id_log = lgs.id
-            ${whereString}
-            GROUP BY 
-                lgs.id, lgs.categoria, lgs.horas_trabalhadas, lgs.linhas_codigo, 
-                lgs.bugs_corrigidos, lgs.id_user, lgs.data_registro, u.nome
-            ORDER BY lgs.data_registro DESC
-            LIMIT ? OFFSET ?;
-        `;
-        
-        // Parâmetros finais para a consulta (filtros + paginação)
-        const finalParams = [...queryParams, limit, offset];
-
-        const [results] = await pool.query(queryLogs, finalParams);
-        
-        // Nota: Para retornar 'totalPages', você precisaria fazer uma segunda query (COUNT(*)).
-        res.send(results);
     } catch (error) {
-        console.error("Erro ao listar logs:", error);
-        res.status(500).send("Erro interno do servidor.");
+        console.error('Erro durante o login:', error);
+        res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
 
-/* Cadastro de logs (cad_logs.html) */
-app.post("/logs", async (req, res) => {
+
+// =================================================================
+// ROTAS DE LOGS (CRUD)
+// =================================================================
+
+// 6. POST /logs - CRIA NOVO LOG
+app.post('/logs', async (req, res) => {
+    const { id_usuario, titulo, categoria, descricao_do_trabalho, horas_trabalhadas, linhas_codigo, bugs_corrigidos } = req.body;
+    
+    // Validação básica para garantir que o ID do usuário está presente
+    if (!id_usuario) {
+        return res.status(400).json({ message: 'ID do usuário é obrigatório.' });
+    }
+
+    const query = `
+        INSERT INTO log_dev (id_usuario, titulo, categoria, descricao_do_trabalho, horas_trabalhadas, linhas_codigo, bugs_corrigidos) 
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    `;
+    const values = [id_usuario, titulo, categoria, descricao_do_trabalho, parseFloat(horas_trabalhadas), parseInt(linhas_codigo), parseInt(bugs_corrigidos)];
+    
     try {
-      const { categoria, horas_trabalhadas, linhas_codigo, bugs_corrigidos, id_user, descricao_do_trabalho } = req.body;
-      
-      const [results] = await pool.query(
-        "INSERT INTO lgs(categoria, horas_trabalhadas, linhas_codigo, bugs_corrigidos, id_user, descricao_do_trabalho, data_registro) VALUES (?, ?, ?, ?, ?, ?, NOW())",
-        [
-          categoria,
-          horas_trabalhadas,
-          linhas_codigo,
-          bugs_corrigidos,
-          id_user,
-          descricao_do_trabalho // Adiciona a descrição
-        ]
-      );
-      const [logCriado] = await pool.query(
-        "SELECT * FROM lgs WHERE id=?",
-        results.insertId
-      );
-      res.status(201).json(logCriado[0]);
+        const [results] = await pool.query(query, values);
+        res.status(201).json({ message: 'Log registrado com sucesso!', id: results.insertId });
     } catch (error) {
-      console.error("Erro ao cadastrar log:", error);
-      res.status(500).send("Erro interno do servidor.");
+        console.error('Erro ao registrar log:', error);
+        res.status(500).json({ message: 'Falha ao cadastrar log no banco de dados.' });
     }
 });
 
-/* Métricas por Usuário (metricas_usuario.html) (Mantida) */
-app.get("/metricas-usuario/:id", async (req, res) => {
-    try {
-      const { id } = req.params;
-      const [ results ] = await pool.query(
-        `
+// 7. GET /logs - LISTA TODOS OS LOGS COM FILTRO/PESQUISA E PAGINAÇÃO
+app.get('/logs', async (req, res) => {
+    // Parâmetros de pesquisa e paginação
+    const { pagina = 1, quantidade = 10, categoria, search } = req.query;
+    const offset = (parseInt(pagina) - 1) * parseInt(quantidade);
+    
+    let baseQuery = `
         SELECT 
-            SUM(horas_trabalhadas) AS horas_trabalhadas, 
-            COUNT(id) AS total_logs, 
-            SUM(bugs_corrigidos) AS bugs_corrigidos 
-        FROM lgs 
-        WHERE id_user = ?;
-        `, id
-      );
-      res.send(results[0] || {}); 
-    } catch (error) {
-      console.error("Erro ao buscar métricas:", error);
-      res.status(500).send("Erro interno do servidor.");
+            ld.*, 
+            u.nome AS usuario_nome, 
+            (SELECT COUNT(*) FROM likes l WHERE l.id_log = ld.id) AS likes_count
+        FROM log_dev ld
+        JOIN usuario u ON ld.id_usuario = u.id
+        WHERE 1=1 
+    `;
+    const params = [];
+
+    // Adiciona filtro por categoria
+    if (categoria) {
+        baseQuery += ' AND ld.categoria = ?';
+        params.push(categoria);
     }
-});
+    
+    // Adiciona filtro por pesquisa (título ou descrição)
+    if (search) {
+        baseQuery += ' AND (ld.titulo LIKE ? OR ld.descricao_do_trabalho LIKE ?)';
+        params.push(`%${search}%`, `%${search}%`);
+    }
 
-// =========================================================================
-// ROTAS DE LIKES (Mantidas)
-// =========================================================================
+    // Ordenação e Limite/Offset
+    baseQuery += ' ORDER BY ld.data_registro DESC LIMIT ? OFFSET ?';
+    params.push(parseInt(quantidade), offset);
 
-app.get("/likes", async (req, res) => {
     try {
-      const [results] = await pool.query("SELECT * FROM `like`");
-      res.send(results);
+        const [logs] = await pool.query(baseQuery, params);
+        res.status(200).json(logs);
     } catch (error) {
-      console.error("Erro ao listar likes:", error);
-      res.status(500).send("Erro interno do servidor.");
+        console.error('Erro ao buscar logs:', error);
+        res.status(500).json({ message: 'Erro ao buscar logs no banco de dados.' });
     }
 });
 
-app.post("/likes", async (req, res) => {
+
+// =================================================================
+// ROTAS DE MÉTRICAS E LIKES
+// =================================================================
+
+// 8. GET /metricas-usuario/:id - MÉTRICAS INDIVIDUAIS
+app.get('/metricas-usuario/:id', async (req, res) => {
+    const userId = req.params.id;
+    
+    const query = `
+        SELECT 
+            COUNT(ld.id) AS total_logs,
+            SUM(ld.horas_trabalhadas) AS horas_trabalhadas,
+            SUM(ld.bugs_corrigidos) AS bugs_corrigidos
+        FROM log_dev ld
+        WHERE ld.id_usuario = ?
+    `;
+
     try {
-      const { id_log, id_user } = req.body;
-      
-      const [results] = await pool.query(
-        "INSERT INTO `like`(id_log, id_user) VALUES(?, ?)",
-        [id_log, id_user]
-      );
-      
-      const [likeCriado] = await pool.query(
-        "SELECT * FROM `like` WHERE id=?",
-        results.insertId
-      );
-      res.status(201).json(likeCriado[0]);
+        const [rows] = await pool.query(query, [userId]);
+        
+        // Se a query retornar um resultado (mesmo que todos os valores sejam NULL),
+        // ele estará em rows[0].
+        if (rows.length > 0) {
+            // Converte NULLs para 0 para evitar problemas de tipo no Frontend
+            const metricas = {
+                total_logs: parseInt(rows[0].total_logs) || 0,
+                horas_trabalhadas: parseFloat(rows[0].horas_trabalhadas) || 0.0,
+                bugs_corrigidos: parseInt(rows[0].bugs_corrigidos) || 0,
+            };
+            return res.status(200).json(metricas);
+        }
+
+        // Caso o usuário não tenha logs
+        res.status(200).json({ total_logs: 0, horas_trabalhadas: 0.0, bugs_corrigidos: 0 });
+
     } catch (error) {
-      console.error("Erro ao dar like:", error);
-      if (error.code === 'ER_DUP_ENTRY') {
-          return res.status(409).send("O usuário já deu like neste log.");
-      }
-      res.status(500).send("Erro interno do servidor.");
+        console.error('Erro ao buscar métricas do usuário:', error);
+        res.status(500).json({ message: 'Erro ao buscar métricas no banco de dados.' });
     }
 });
 
-app.delete("/likes", async (req, res) => {
+// 9. POST /likes - ADICIONA UM LIKE
+app.post('/likes', async (req, res) => {
+    const { id_log, id_user } = req.body;
+
+    const checkQuery = 'SELECT id FROM likes WHERE id_user = ? AND id_log = ?';
+    
     try {
-      const { id_log, id_user } = req.query;
-      
-      const [results] = await pool.query(
-        "DELETE FROM `like` WHERE id_log=? AND id_user=?",
-        [id_log, id_user]
-      );
-  
-      if (results.affectedRows === 0) {
-          return res.status(404).send("Like não encontrado para exclusão.");
-      }
-      
-      res.status(200).send("Like retirado com sucesso!");
+        const [existingLikes] = await pool.query(checkQuery, [id_user, id_log]);
+        
+        // Verifica se o like já existe
+        if (existingLikes.length > 0) {
+            // Retorna status 409 (Conflict) se a entrada duplicada for detectada
+            return res.status(409).json({ message: 'Like já existente.' }); 
+        }
+
+        // Se não existir, insere
+        const insertQuery = 'INSERT INTO likes (id_user, id_log) VALUES (?, ?)';
+        await pool.query(insertQuery, [id_user, id_log]);
+        
+        res.status(201).json({ message: 'Like registrado com sucesso.' });
+        
     } catch (error) {
-      console.error("Erro ao retirar like:", error);
-      res.status(500).send("Erro interno do servidor.");
+        console.error('Erro ao registrar like:', error);
+        res.status(500).json({ message: 'Erro interno ao registrar like.' });
     }
 });
 
-// INICIALIZAÇÃO DO SERVIDOR
-app.listen(3000, () => {
-    console.log(`Servidor rodando na porta: http://localhost:3000`);
+// 10. DELETE /likes - REMOVE UM LIKE (usa query parameters)
+app.delete('/likes', async (req, res) => {
+    const { id_log, id_user } = req.query; // Pega o ID do log e usuário dos query parameters
+    
+    if (!id_log || !id_user) {
+        return res.status(400).json({ message: 'IDs de log e usuário são obrigatórios.' });
+    }
+    
+    const deleteQuery = 'DELETE FROM likes WHERE id_log = ? AND id_user = ?';
+    
+    try {
+        const [results] = await pool.query(deleteQuery, [id_log, id_user]);
+
+        if (results.affectedRows === 0) {
+            return res.status(404).json({ message: 'Like não encontrado para remoção.' });
+        }
+        
+        res.status(200).json({ message: 'Like removido com sucesso.' });
+        
+    } catch (error) {
+        console.error('Erro ao remover like:', error);
+        res.status(500).json({ message: 'Erro interno ao remover like.' });
+    }
+});
+
+// 11. INICIA O SERVIDOR
+app.listen(port, () => {
+    console.log(`Servidor rodando na porta: http://localhost:${port}`); //
+    console.log(`Acesse o Frontend em: http://localhost:${port}/view/index.html`);
 });
