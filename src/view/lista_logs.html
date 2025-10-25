@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comunidade de Logs - DevHub</title>
+    <link rel="stylesheet" href="../style/style.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/css/bootstrap.min.css">
+    <style>
+        body { background-color: #f4f4f4; }
+        .log-card { border: 1px solid #e9ecef; border-radius: 8px; padding: 15px; margin-bottom: 20px; background-color: white; } 
+        .log-metrics-detail { display: flex; gap: 15px; font-size: 0.85em; margin-bottom: 10px; }
+        .log-metrics-detail span { color: #6c757d; } 
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; margin-right: 10px; background-color: #ced4da; }
+        .log-header { display: flex; align-items: center; margin-bottom: 10px; }
+        .main-container { padding-top: 20px; }
+    </style>
+</head>
+<body>
+
+    <script>
+        const usuarioLogado = localStorage.getItem('usuarioLogado');
+        if (!usuarioLogado) {
+            alert("Você não está logado. Redirecionando para o login.");
+            window.location.href = 'login.html'; 
+        }
+        const usuario = JSON.parse(usuarioLogado);
+    </script>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="index.html">DevHub</a>
+            <div class="collapse navbar-collapse">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link" href="index.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="lista_logs.html">Comunidade Logs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="metricas_usuario.html">Métricas Detalhadas</a></li>
+                </ul>
+                <button class="btn btn-sm btn-outline-danger" id="btnLogout">Sair</button>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container main-container">
+        
+        <h1 class="mb-4 text-center">Logs da Comunidade</h1>
+        
+        <div class="row mb-4">
+            <div class="col-md-8 offset-md-2">
+                <input type="text" class="form-control" id="inputSearch" placeholder="Pesquisar por Título ou Descrição...">
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-8 offset-md-2">
+                <div id="logs-feed-comunidade">
+                    <p class="alert alert-info text-center">Carregando logs da comunidade...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-8 offset-md-2 d-flex justify-content-between">
+                <button class="btn btn-outline-secondary" id="btnAnterior" disabled>Anterior</button>
+                <span id="paginaAtual" class="align-self-center">Página 1</span>
+                <button class="btn btn-outline-secondary" id="btnProximo">Próximo</button>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/js/bootstrap.bundle.min.js"></script>
+    <script>
+        
+        let paginaAtual = 1;
+        const logsPorPagina = 10;
+        
+        // 1. LOGOUT
+        document.getElementById('btnLogout').addEventListener('click', () => {
+            localStorage.removeItem('usuarioLogado');
+            window.location.href = 'login.html';
+        });
+
+        // 2. FUNÇÃO PARA DAR/RETIRAR LIKE (Reutilizada)
+        async function toggleLike(logId, userId) {
+            const url = "http://localhost:3000/likes";
+            
+            try {
+                // Tenta DAR o like (POST)
+                let response = await fetch(url, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ id_log: logId, id_user: userId })
+                });
+
+                if (response.status === 201) {
+                    carregarLogs(); // Recarrega
+                    return;
+                } 
+                
+                // Se falhar com 409 (Conflito: Duplicado), tenta retirar o like (DELETE)
+                if (response.status === 409) {
+                    response = await fetch(`${url}?id_log=${logId}&id_user=${userId}`, {
+                        method: "DELETE"
+                    });
+
+                    if (response.ok) {
+                        carregarLogs(); // Recarrega
+                        return;
+                    } 
+                }
+                
+                alert("Erro na operação de like/deslike.");
+
+            } catch (error) {
+                console.error("Erro na operação de like/deslike: ", error);
+            }
+        }
+
+        // 3. ADICIONA EVENT LISTENER NOS BOTÕES DE LIKE
+        function adicionarListenersLike() {
+            const userId = usuario.id;
+            document.querySelectorAll('.btn-like').forEach(button => {
+                button.addEventListener('click', function() {
+                    const logId = parseInt(this.getAttribute('data-log-id'));
+                    if (logId && userId) {
+                        toggleLike(logId, userId);
+                    } else {
+                        alert("Erro: ID do Log ou ID do Usuário ausente.");
+                    }
+                });
+            });
+        }
+        
+        // 4. FUNÇÃO PRINCIPAL PARA CARREGAR O FEED DE LOGS
+        async function carregarLogs() {
+            const logsFeed = document.getElementById('logs-feed-comunidade');
+            const termoPesquisa = document.getElementById('inputSearch').value;
+            
+            logsFeed.innerHTML = '<p class="alert alert-info text-center">Carregando logs...</p>';
+
+            let url = `http://localhost:3000/logs?pagina=${paginaAtual}&quantidade=${logsPorPagina}`; 
+            
+            if (termoPesquisa) {
+                url += `&search=${encodeURIComponent(termoPesquisa)}`;
+            }
+            
+            try {
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    // Lança um erro se a resposta não for bem-sucedida (ex: 404, 500)
+                    throw new Error('Falha na conexão com o servidor Node.js ou erro interno.');
+                }
+
+                const logs = await response.json();
+                
+                logsFeed.innerHTML = ''; 
+
+                if (logs.length === 0) {
+                    logsFeed.innerHTML = '<div class="alert alert-info">Nenhum log encontrado na comunidade.</div>';
+                    document.getElementById('btnProximo').disabled = true;
+                    return;
+                }
+
+                logs.forEach(log => {
+                    // CORREÇÃO APLICADA: Usa parseFloat() para garantir que o valor é um número antes de chamar .toFixed()
+                    const horasLog = parseFloat(log.horas_trabalhadas) || 0;
+
+                    const logElement = document.createElement('div');
+                    logElement.className = 'log-card';
+                    logElement.innerHTML = `
+                        <div class="log-header">
+                            <div class="user-avatar" style="background-color: #ced4da;"></div>
+                            <div>
+                                <h6 class="mb-0 fw-bold">${log.usuario_nome || 'Usuário Desconhecido'}</h6>
+                                <span class="small text-muted">${new Date(log.data_registro).toLocaleDateString()}</span>
+                            </div>
+                        </div>
+                        
+                        <h5 class="mt-2 mb-1">${log.titulo || 'Log Sem Título'} 
+                            <span class="badge bg-primary ms-2">${log.categoria}</span>
+                        </h5>
+                        
+                        <p class="small">${log.descricao_do_trabalho || 'Nenhuma descrição fornecida.'}</p>
+                        
+                        <div class="log-metrics-detail">
+                            <span>🕒 ${horasLog.toFixed(1)}h</span>
+                            <span>✍️ ${log.linhas_codigo || 0} linhas</span>
+                            <span>🐛 ${log.bugs_corrigidos || 0} bugs corrigidos</span>
+                        </div>
+                        
+                        <div class="log-actions mt-2">
+                            <button class="btn btn-sm btn-link text-danger p-0 btn-like" data-log-id="${log.id}">
+                                ❤️ ${log.likes_count || 0}
+                            </button> 
+                            <button class="btn btn-sm btn-link p-0">
+                                💬 0 comentários
+                            </button>
+                        </div>
+                    `;
+                    logsFeed.appendChild(logElement);
+                });
+
+                // Atualiza o estado da paginação
+                document.getElementById('paginaAtual').textContent = `Página ${paginaAtual}`;
+                document.getElementById('btnAnterior').disabled = (paginaAtual === 1);
+                document.getElementById('btnProximo').disabled = (logs.length < logsPorPagina);
+                
+                adicionarListenersLike(); 
+                
+            } catch (error) {
+                console.error("Erro ao carregar logs:", error);
+                logsFeed.innerHTML = '<div class="alert alert-danger">Falha ao carregar o feed. Verifique se o servidor está rodando.</div>';
+            }
+        }
+        
+        // 5. LÓGICA DE PAGINAÇÃO E PESQUISA
+        document.getElementById('btnAnterior').addEventListener('click', () => {
+            if (paginaAtual > 1) {
+                paginaAtual--;
+                carregarLogs();
+            }
+        });
+
+        document.getElementById('btnProximo').addEventListener('click', () => {
+            paginaAtual++;
+            carregarLogs();
+        });
+
+        let searchTimeout;
+        document.getElementById('inputSearch').addEventListener('input', () => {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                paginaAtual = 1; 
+                carregarLogs();
+            }, 500);
+        });
+
+
+        // 6. CHAMA AS FUNÇÕES AO CARREGAR A PÁGINA
+        document.addEventListener('DOMContentLoaded', () => {
+            carregarLogs();
+        });
+
+    </script>
+</body>
+</html>

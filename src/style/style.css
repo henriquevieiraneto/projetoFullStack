@@ -1,0 +1,120 @@
+/*
+    ------------------------------------------------------
+    ESTILOS GLOBAIS / RESET
+    ------------------------------------------------------
+*/
+
+/* Links: Garante cor preta e remove sublinhado por padrão */
+a {
+    color: #000 !important;
+    text-decoration: none !important;
+}
+
+/* Links: Efeito ao passar o mouse */
+a:hover {
+    text-decoration: underline !important;
+    opacity: 0.7;
+}
+
+/* Inputs: Define largura 100% para responsividade dentro do formulário */
+/* e evita conflitos com o Bootstrap */
+input.form-control,
+select.form-select {
+    width: 100% !important; 
+    max-width: 350px;
+}
+
+/* Botões: Define largura padrão para botões (ex: botões de envio) */
+.btn {
+    width: 100%; 
+    max-width: 150px;
+    margin-top: 15px;
+}
+
+
+/*
+    ------------------------------------------------------
+    ESTILOS ESPECÍFICOS DO FORMULÁRIO DE LOGIN/CADASTRO
+    ------------------------------------------------------
+*/
+
+#frmLogin, #frmCadLogs { 
+    /* Max-width para responsividade, se for usado o mesmo estilo de container para o cadastro */
+    max-width: 400px;
+    
+    padding: 25px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background-color: #ffffff; 
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); 
+
+    /* Centralização na tela */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    
+    /* Centralização vertical (10vh) */
+    margin: 10vh auto; 
+}
+
+#frmLogin h3, #frmCadLogs h1 {
+    margin-bottom: 25px;
+    text-align: center;
+}
+
+
+/*
+    ------------------------------------------------------
+    ESTILOS DO DASHBOARD (index.html)
+    ------------------------------------------------------
+*/
+
+/* Fundo da página */
+body { 
+    background-color: #f4f4f4; /* Fundo cinza claro para destacar os cards */
+}
+
+/* Navbar */
+.navbar { 
+    box-shadow: 0 2px 4px rgba(0,0,0,.05); /* Sombra suave para o topo */
+}
+
+/* Sidebar e Cards (os blocos brancos) */
+.sidebar, .log-card { 
+    background-color: #ffffff;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0,0,0,.05);
+}
+
+.log-card {
+    border: 1px solid #e0e0e0; /* Borda sutil para logs */
+    margin-bottom: 20px;
+}
+
+/* Ações de Log (likes e comentários) */
+.log-actions { 
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    margin-top: 10px;
+}
+
+/* Correção para o problema dos filtros (Imagem dos filtros) */
+/* Garante que os inputs dentro da área de filtro se comportem como checkboxes simples */
+#filtro-area .form-check-input {
+    width: 1em;
+    height: 1em;
+    border-radius: 0.25em; 
+    appearance: checkbox; /* Força o estilo de checkbox nativo */
+    -webkit-appearance: checkbox; 
+    -moz-appearance: checkbox;
+    margin-top: 0.25em;
+    float: left;
+    margin-left: -1.5em;
+}
+
+#filtro-area .form-check-label {
+    margin-bottom: 0;
+    padding-left: 0.5em;
+}

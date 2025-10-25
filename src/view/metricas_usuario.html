@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Métricas do Usuário - DevHub</title>
+    <link rel="stylesheet" href="../style/style.css"> 
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/css/bootstrap.min.css">
+    
+    <style>
+        body { background-color: #f4f4f4; }
+        .metric-card {
+            background-color: white;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,.05);
+            text-align: center;
+        }
+        .metric-value {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        const usuarioLogado = localStorage.getItem('usuarioLogado');
+        if (!usuarioLogado) {
+            alert("Você não está logado. Redirecionando para o login.");
+            window.location.href = 'login.html'; 
+        }
+        const usuario = JSON.parse(usuarioLogado);
+    </script>
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold" href="index.html">DevHub - Minhas Métricas</a>
+            <a href="index.html" class="btn btn-sm btn-secondary ms-auto">Voltar ao Dashboard</a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        
+        <h1 class="mb-4 text-center">Relatório de Progresso de <span id="nome-usuario-metricas"></span></h1>
+
+        <div class="row" id="metricas-container">
+            <div class="col-12">
+                <p class="alert alert-info text-center">Carregando dados...</p>
+            </div>
+        </div>
+        
+        <h2 class="mt-5 mb-3">Seus Logs Mais Recentes</h2>
+        <div id="logs-recentes">
+            <p class="alert alert-warning">Esta seção mostraria apenas seus últimos logs.</p>
+        </div>
+
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('nome-usuario-metricas').textContent = usuario.nome;
+            carregarMetricasDetalhadas(usuario.id);
+        });
+
+        async function carregarMetricasDetalhadas(userId) {
+            const container = document.getElementById('metricas-container');
+            const url = `http://localhost:3000/metricas-usuario/${userId}`;
+            
+            try {
+                const response = await fetch(url);
+                const metricas = await response.json();
+                
+                // Limpa a mensagem de carregamento
+                container.innerHTML = ''; 
+
+                const dados = [
+                    { 
+                        titulo: "Total de Logs", 
+                        valor: metricas.total_logs || 0, 
+                        unidade: "Logs",
+                        cor: "text-primary"
+                    },
+                    { 
+                        titulo: "Horas Trabalhadas", 
+                        valor: (metricas.horas_trabalhadas || 0).toFixed(1), 
+                        unidade: "Horas",
+                        cor: "text-success"
+                    },
+                    { 
+                        titulo: "Bugs Corrigidos", 
+                        valor: metricas.bugs_corrigidos || 0, 
+                        unidade: "Bugs",
+                        cor: "text-danger"
+                    }
+                    // Você pode adicionar outras métricas aqui, como total de linhas de código
+                ];
+
+                dados.forEach(item => {
+                    const col = document.createElement('div');
+                    col.className = 'col-md-4 mb-4';
+                    col.innerHTML = `
+                        <div class="metric-card">
+                            <h6 class="text-muted">${item.titulo}</h6>
+                            <div class="metric-value ${item.cor}">${item.valor}</div>
+                            <p class="text-muted small">${item.unidade}</p>
+                        </div>
+                    `;
+                    container.appendChild(col);
+                });
+
+
+            } catch (error) {
+                console.error("Erro ao carregar métricas detalhadas:", error);
+                container.innerHTML = '<div class="col-12"><div class="alert alert-danger">Falha ao carregar as métricas do usuário.</div></div>';
+            }
+        }
+    </script>
+</body>
+</html>
