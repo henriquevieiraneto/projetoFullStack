@@ -1,0 +1,275 @@
+/* src/view/index/index.css */
+
+/* 1. Estilos Gerais e de Layout */
+body {
+    background-color: #f4f4f4; /* Fundo cinza claro */
+    font-family: 'Inter', sans-serif; /* Fonte padrão */
+    color: #212529; /* Cor de texto padrão (escuro) */
+    line-height: 1.6;
+}
+
+.dashboard-container {
+    padding-top: 1.5rem;
+    padding-bottom: 1.5rem;
+}
+
+/* 2. Estilos da Sidebar */
+.sidebar {
+    background-color: #ffffff;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    margin-bottom: 1.5rem; /* Espaçamento inferior */
+}
+
+.sidebar__profile {
+    display: flex;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.sidebar__user-info {
+    flex-grow: 1; /* Ocupa o espaço restante */
+}
+
+.sidebar__user-name {
+    font-weight: bold;
+    font-size: 1rem;
+    margin-bottom: 0.1rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.sidebar__user-title {
+    font-size: 0.8rem;
+    color: #6c757d; /* Cinza secundário */
+    margin-bottom: 0;
+}
+
+.sidebar__divider {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border-top: 1px solid #dee2e6; /* Cinza claro */
+}
+
+.sidebar__section-title {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #6c757d;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+    margin-top: 1.5rem; /* Espaço acima dos títulos de seção */
+}
+
+/* Lista de Métricas */
+.metrics-list {
+    list-style: none;
+    padding-left: 0;
+    font-size: 0.875rem; /* Tamanho pequeno */
+}
+
+.metrics-list__item {
+    margin-bottom: 0.5rem;
+    color: #495057; /* Cinza mais escuro */
+}
+
+.metrics-list__value {
+    font-weight: bold;
+}
+.metrics-list__value--primary { color: #0d6efd; } /* Azul */
+.metrics-list__value--danger { color: #dc3545; } /* Vermelho */
+.metrics-list__value--success { color: #198754; } /* Verde */
+
+/* Lista de Filtros */
+.filter-list {
+    font-size: 0.875rem;
+}
+.filter-list__item {
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+.filter-list__checkbox {
+    margin-right: 0.5rem;
+    cursor: pointer;
+}
+.filter-list__label {
+    margin-bottom: 0; /* Remove margem padrão do Bootstrap */
+    cursor: pointer;
+}
+
+/* 3. Coluna Central (Feed) */
+.btn-create-log {
+    font-weight: 600;
+}
+
+.logs-feed-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem; /* Espaço entre os cards de log */
+}
+
+/* Card de Log */
+.log-card {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    padding: 1.25rem;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    border: 1px solid #dee2e6;
+    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+}
+
+.log-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.log-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.user-avatar {
+    width: 36px; /* Um pouco menor */
+    height: 36px;
+    border-radius: 50%;
+    background-color: #0d6efd;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 0.9rem;
+    margin-right: 0.75rem;
+    flex-shrink: 0;
+}
+
+.log-header h6 { /* Nome */
+    margin-bottom: 0;
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+.log-header span.small { /* Data */
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+
+.log-card h5 { /* Título do Log */
+    font-size: 1.1rem;
+    font-weight: bold;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+}
+
+.log-card p.small { /* Descrição */
+    font-size: 0.875rem;
+    color: #495057;
+    margin-bottom: 0.75rem;
+}
+
+.log-metrics-detail {
+    display: flex;
+    gap: 1rem; /* Espaço entre métricas */
+    font-size: 0.75rem;
+    color: #6c757d;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid #e9ecef; /* Linha divisória */
+}
+
+.log-actions {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-top: 0.75rem;
+}
+
+.log-actions .btn-like {
+    font-size: 0.9rem; /* Tamanho do ícone/texto */
+    padding: 0; /* Remove padding extra de botões link */
+    transition: color 0.15s ease-in-out; /* Transição suave de cor */
+    background: none; /* Garante fundo transparente */
+    border: none; /* Remove borda */
+    cursor: pointer;
+}
+
+.log-actions .btn-like.text-danger {
+    color: #dc3545 !important; /* Coração vermelho para like ativo */
+}
+
+.log-actions .btn-like.text-muted {
+     color: #6c757d !important; /* Cinza para não-like */
+}
+
+.log-actions .btn-like:hover {
+     color: #dc3545 !important; /* Sempre vermelho no hover */
+}
+
+.log-actions .btn-comment { /* Botão de Comentário (se for usar) */
+     font-size: 0.85rem;
+     padding: 0;
+     color: #6c757d;
+     text-decoration: none;
+     background: none;
+     border: none;
+     cursor: pointer;
+}
+.log-actions .btn-comment:hover {
+    text-decoration: underline;
+    color: #0d6efd;
+}
+
+
+/* 4. Sidebar Direita */
+.activity-list, .featured-devs-list {
+    list-style: none;
+    padding-left: 0;
+    font-size: 0.8rem;
+    color: #6c757d;
+}
+.activity-list__item, .featured-devs-list__item {
+    margin-bottom: 0.5rem;
+    line-height: 1.4;
+}
+.activity-list__item .badge {
+    font-size: 0.65rem;
+    vertical-align: middle;
+}
+
+/* 5. Mensagens de Alerta/Loading */
+.loading-message, .empty-feed-message {
+    padding: 1rem;
+    text-align: center;
+    color: #6c757d;
+    background-color: #e9ecef;
+    border: 1px solid #dee2e6;
+    border-radius: 0.5rem;
+}
+
+/* Spinner (se usar no JS) */
+.spinner {
+    border: 4px solid rgba(0, 0, 0, 0.1);
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border-left-color: #0d6efd;
+    animation: spin 1s ease infinite;
+    margin: 2rem auto;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* 6. Responsividade */
+@media (max-width: 991px) { /* Abaixo de LG */
+    .sidebar {
+        margin-top: 1rem; /* Adiciona espaço no topo em telas menores */
+    }
+}
+
+

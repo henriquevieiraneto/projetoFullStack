@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevHub - Minhas Métricas</title>
+    <!-- Carregamento do Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Link para o arquivo de estilos customizados -->
+    <link rel="stylesheet" href="metricas_usuario.css">
+    
+    <!-- Configurações de fonte Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- Navbar simples (Placeholder) -->
+    <header class="bg-white shadow-md p-4 sticky top-0 z-10">
+        <div class="container mx-auto flex justify-between items-center">
+            <h1 class="text-2xl font-bold text-blue-600">Dev<span class="text-gray-800">Hub</span></h1>
+            <nav>
+                <a href="index.html" class="text-gray-600 hover:text-blue-600 px-3">Início</a>
+                <span class="text-blue-600 px-3 font-semibold">Métricas</span>
+                <button id="btnLogout" class="bg-red-500 text-white px-3 py-1 rounded-lg hover:bg-red-600 transition duration-150 ml-4">Sair</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 sm:p-6 lg:p-8">
+        <h2 class="text-3xl font-extrabold text-gray-800 mb-6">Métricas de Desenvolvimento 🚀</h2>
+
+        <!-- Área de Status e Mensagens -->
+        <div id="statusMessage" class="hidden p-4 mb-6 text-sm text-red-800 bg-red-100 rounded-lg" role="alert">
+            <!-- Mensagens de status ou erro serão injetadas aqui -->
+        </div>
+
+        <!-- Carregamento -->
+        <div id="loadingIndicator" class="flex justify-center items-center h-48">
+            <div class="spinner mr-3"></div>
+            <p class="text-gray-600">Carregando dados...</p>
+        </div>
+
+        <!-- CONTEÚDO PRINCIPAL (Exibido após o carregamento) -->
+        <div id="dashboardContent" class="hidden">
+            
+            <!-- Linha de Cartões de Sumário (Responsivo) -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                
+                <!-- Card 1: Total de Logs/Commits -->
+                <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-blue-500">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Logs Registrados</p>
+                        <span class="text-blue-500 text-2xl">📝</span>
+                    </div>
+                    <p id="metricTotalLogs" class="text-4xl font-extrabold text-gray-900 mt-2">...</p>
+                    <p class="text-sm text-gray-400 mt-1">Total na sua jornada</p>
+                </div>
+
+                <!-- Card 2: Sequência Atual (Streak) -->
+                <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-green-500">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Sequência Atual</p>
+                        <span class="text-green-500 text-2xl">🔥</span>
+                    </div>
+                    <p id="metricCurrentStreak" class="text-4xl font-extrabold text-gray-900 mt-2">...</p>
+                    <p class="text-sm text-gray-400 mt-1">Dias de atividade ininterrupta</p>
+                </div>
+
+                <!-- Card 3: Maior Sequência -->
+                <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-yellow-500">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Maior Sequência</p>
+                        <span class="text-yellow-500 text-2xl">🏆</span>
+                    </div>
+                    <p id="metricLongestStreak" class="text-4xl font-extrabold text-gray-900 mt-2">...</p>
+                    <p class="text-sm text-gray-400 mt-1">Seu recorde pessoal</p>
+                </div>
+
+                <!-- Card 4: Última Atividade -->
+                <div class="bg-white p-6 rounded-xl shadow-lg border-l-4 border-purple-500">
+                    <div class="flex items-center justify-between">
+                        <p class="text-sm font-medium text-gray-500 uppercase tracking-wider">Último Log</p>
+                        <span class="text-purple-500 text-2xl">⏰</span>
+                    </div>
+                    <p id="metricLastActivity" class="text-xl font-extrabold text-gray-900 mt-2">...</p>
+                    <p class="text-sm text-gray-400 mt-1">Data da última submissão</p>
+                </div>
+
+            </div>
+            
+            <!-- Gráfico de Histórico de Logs (D3.js) -->
+            <div class="bg-white p-6 rounded-xl shadow-lg mb-8">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">Histórico de Logs (Últimos 30 Dias)</h3>
+                <!-- Container para o gráfico D3 -->
+                <div id="logHistoryChart" class="w-full overflow-x-auto">
+                    <svg id="chartSvg"></svg>
+                </div>
+            </div>
+
+            <!-- Atividades Recentes (Mock/Placeholder) -->
+            <div class="bg-white p-6 rounded-xl shadow-lg">
+                <h3 class="text-xl font-semibold text-gray-700 mb-4">Atividades Recentes</h3>
+                <ul id="recentActivitiesList" class="divide-y divide-gray-200">
+                    <!-- Logs recentes serão injetados aqui -->
+                </ul>
+                <p id="emptyActivityMsg" class="text-gray-500 text-center py-4 hidden">Nenhuma atividade recente encontrada.</p>
+            </div>
+        </div>
+
+    </main>
+
+    <div id="firestoreTooltip" class="tooltip"></div>
+
+    <!-- Link para o arquivo de script (type="module" é essencial para os imports do Firebase) -->
+    <script type="module" src="metricas_usuario.js"></script>
+</body>
+</html>

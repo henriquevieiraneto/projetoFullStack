@@ -1,0 +1,61 @@
+/* -------------------------------------- */
+/* 1. Estilos Base e Tipografia */
+/* -------------------------------------- */
+
+/* Define a fonte 'Inter' para o corpo, complementando o Tailwind CSS. */
+body { 
+    font-family: 'Inter', sans-serif; 
+}
+
+/* Garante que o container principal ocupe a altura mínima da tela no mobile */
+body.min-h-screen {
+    min-height: 100vh;
+}
+
+/* -------------------------------------- */
+/* 2. Estilos Customizados de Componentes */
+/* -------------------------------------- */
+
+/* Estilo para o cartão de login/registro (complementando as classes Tailwind) */
+#loginCard {
+    /* max-w-md equivalente (448px) */
+    max-width: 28rem; 
+    /* Garante que o padding interno seja consistente */
+    padding: 2rem; 
+}
+
+/* Estilo para o título principal (DevHub) */
+.text-blue-600 {
+    color: #2563eb; /* Tailwind blue-600 */
+}
+
+.text-gray-800 {
+    color: #1f2937; /* Tailwind gray-800 */
+}
+
+/* Estilo para os inputs de texto e senha */
+input[type="email"],
+input[type="password"] {
+    /* Define a transição de foco (Tailwind focus ring) */
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+/* Estilo para botões primários (Login) */
+#btnLogin, #btnRegister {
+    /* Adiciona transição para o efeito hover (transform hover:scale-[1.01] é do Tailwind) */
+    transition: background-color 0.15s ease-in-out, transform 0.15s ease-in-out;
+}
+
+/* Estilo para o divisor ("ou") */
+.relative span {
+    z-index: 10; /* Garante que o texto fique acima da linha */
+}
+
+/* Estilo para o texto de alternância entre login/registro */
+#toggleToRegister, #toggleToLogin {
+    cursor: pointer;
+    text-decoration: none;
+}
+#toggleToRegister:hover, #toggleToLogin:hover {
+    text-decoration: underline;
+}

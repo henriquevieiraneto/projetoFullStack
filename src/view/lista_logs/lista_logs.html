@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevHub - Lista Completa de Logs</title>
+    <!-- Carregamento do Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Configurações de fonte Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        /* Define a fonte */
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+    <!-- CONEXÃO CSS: O CSS está na pasta index/ (../ para voltar um nível) -->
+    <link rel="stylesheet" href="../index/index.css">
+    <!-- Ícone para o botão de like/comment - Phosphor Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web@2.1.1/dist/umd/phosphor-icons.js"></script>
+</head>
+<body class="bg-gray-100 min-h-screen">
+
+    <!-- Navbar/Header Fixo -->
+    <header class="bg-white shadow-md sticky top-0 z-10">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="flex items-center space-x-4">
+                <!-- Link de volta para o Dashboard Principal -->
+                <a href="/src/view/index/index.html" class="text-3xl font-extrabold text-blue-600 tracking-tight">
+                    Dev<span class="text-gray-800">Hub</span>
+                </a>
+                <span class="hidden sm:inline text-gray-500">
+                    Lista de Logs, <span id="usuarioNome" class="font-semibold text-gray-800">Carregando...</span>
+                </span>
+            </div>
+            
+            <div class="flex items-center space-x-3">
+                <!-- Link para Cadastrar Log -->
+                <a href="/src/view/cad_logs/cad_logs.html" 
+                   class="px-4 py-2 bg-green-500 text-white text-sm font-medium rounded-lg hover:bg-green-600 transition duration-150 shadow-md">
+                    + Novo Log
+                </a>
+                <!-- Botão de Logout (ID necessária para o JS) -->
+                <button id="btnLogout"
+                        class="px-4 py-2 text-sm font-medium text-red-600 bg-red-100 rounded-lg hover:bg-red-200 transition duration-150 shadow-sm">
+                    Sair
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Container Principal do Dashboard -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 main-container">
+        
+        <!-- Layout Responsivo: Sidebar à esquerda, Feed à direita. Em mobile, Sidebar fica em cima. -->
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-6">
+
+            <!-- Coluna da Sidebar (1/4 de largura em desktop) -->
+            <aside class="lg:col-span-1">
+                
+                <!-- 1. Card de Métricas do Usuário (ID: metricas-usuario) -->
+                <!-- Reutiliza a mesma ID do index.html para o JS carregar as métricas -->
+                <div id="metricas-usuario" class="sidebar">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Suas Métricas</h3>
+                    <div class="space-y-3">
+                        <div class="flex justify-between items-center text-gray-600">
+                            <span class="flex items-center"><i class="ph ph-list text-lg mr-2 text-blue-500"></i> Total de Logs</span>
+                            <span id="qtd-logs" class="font-bold text-gray-800">0</span>
+                        </div>
+                        <div class="flex justify-between items-center text-gray-600">
+                            <span class="flex items-center"><i class="ph ph-bug text-lg mr-2 text-red-500"></i> Bugs Corrigidos</span>
+                            <span id="total-bugs" class="font-bold text-gray-800">0</span>
+                        </div>
+                        <div class="flex justify-between items-center text-gray-600">
+                            <span class="flex items-center"><i class="ph ph-hourglass-simple text-lg mr-2 text-yellow-500"></i> Horas Dedicadas</span>
+                            <span id="total-horas" class="font-bold text-gray-800">0.0h</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Área de Filtros (ID: filtro-area) -->
+                 <!-- Reutiliza a mesma ID do index.html para o JS gerenciar filtros -->
+                <div id="filtro-area" class="sidebar mt-6">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4 border-b pb-2">Filtrar por Categoria</h3>
+                    
+                    <div class="space-y-2">
+                        <label class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 cursor-pointer">
+                            <input type="checkbox" id="filterProgramacao" value="Programacao" class="rounded text-blue-600 focus:ring-blue-500" />
+                            <span>Programação</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 cursor-pointer">
+                            <input type="checkbox" id="filterArte" value="Arte 3D/2D" class="rounded text-blue-600 focus:ring-blue-500" />
+                            <span>Arte 3D/2D</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 cursor-pointer">
+                            <input type="checkbox" id="filterSound" value="Sound Design" class="rounded text-blue-600 focus:ring-blue-500" />
+                            <span>Sound Design</span>
+                        </label>
+                         <label class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 cursor-pointer">
+                            <input type="checkbox" id="filterDesignNivel" value="Design de Nível" class="rounded text-blue-600 focus:ring-blue-500" />
+                            <span>Design de Nível</span>
+                        </label>
+                        <label class="flex items-center space-x-2 text-sm text-gray-700 hover:text-blue-600 cursor-pointer">
+                            <input type="checkbox" id="filterDocumentacao" value="Documentacao" class="rounded text-blue-600 focus:ring-blue-500" />
+                            <span>Documentação</span>
+                        </label>
+                    </div>
+                </div>
+
+            </aside>
+
+            <!-- Coluna do Feed de Logs (3/4 de largura em desktop) -->
+            <section class="lg:col-span-3">
+                <h3 class="text-2xl font-bold text-gray-800 mb-4">Lista Completa de Logs</h3>
+                
+                <!-- Onde os logs serão injetados pelo JavaScript (ID necessária para o JS) -->
+                <div id="logs-feed" class="space-y-5">
+                    <!-- Conteúdo será carregado por ../index/index.js -->
+                    <div class="bg-blue-100 text-blue-800 p-4 rounded-lg shadow-sm">
+                        Carregando a lista de logs...
+                    </div>
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- CONEXÃO JAVASCRIPT: Arquivo de lógica do dashboard está na pasta index/ (../ para voltar um nível) -->
+    <script src="../index/index.js"></script>
+</body>
+</html>

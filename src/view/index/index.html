@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DevHub - Dashboard</title>
+
+    <!-- Link para o Bootstrap (Ainda pode ser útil para Grid ou componentes específicos) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/css/bootstrap.min.css">
+
+    <!-- Link para o CSS customizado -->
+    <link rel="stylesheet" href="index.css">
+
+    <!-- Link para Font Awesome (Ícones) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+</head>
+<body>
+
+    <!-- Barra de Navegação (Usando classes Bootstrap básicas) -->
+    <nav class="navbar navbar-expand-lg navbar-light bg-light border-bottom shadow-sm">
+        <div class="container-fluid">
+            <a class="navbar-brand fw-bold text-primary" href="index.html">DevHub</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link active" href="index.html">Dashboard</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../lista_logs/lista_logs.html">Comunidade Logs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="../metricas_usuario/metricas_usuario.html">Métricas Detalhadas</a></li>
+                </ul>
+                <button class="btn btn-sm btn-outline-danger" id="btnLogout">Sair</button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Conteúdo Principal -->
+    <main class="dashboard-container container py-4">
+        <div class="row">
+
+            <!-- SIDEBAR ESQUERDA: Métricas Pessoais e Filtros -->
+            <aside class="col-lg-3 mb-4 mb-lg-0">
+                <div class="sidebar">
+                    <div class="sidebar__profile">
+                         <div class="user-avatar">?</div>
+                         <div class="sidebar__user-info">
+                            <h5 id="usuarioNome" class="sidebar__user-name">Carregando...</h5>
+                            <p class="sidebar__user-title">Game Developer</p>
+                        </div>
+                    </div>
+                    <hr class="sidebar__divider">
+
+                    <h6 class="sidebar__section-title">Métricas Pessoais</h6>
+                    <ul class="metrics-list">
+                        <li class="metrics-list__item">Qtd. Logs: <span id="qtd-logs" class="metrics-list__value metrics-list__value--primary">0</span></li>
+                        <li class="metrics-list__item">Total de Bugs: <span id="total-bugs" class="metrics-list__value metrics-list__value--danger">0</span></li>
+                        <li class="metrics-list__item">Horas Trabalhadas: <span id="total-horas" class="metrics-list__value metrics-list__value--success">0h</span></li>
+                    </ul>
+
+
+                    <h6 class="sidebar__section-title">Filtros de Categoria</h6>
+                    <div id="filtro-area" class="filter-list">
+                        <div class="filter-list__item">
+                            <input class="filter-list__checkbox" type="checkbox" value="Programacao" id="filterProgramacao">
+                            <label class="filter-list__label" for="filterProgramacao">Programação</label>
+                        </div>
+                        <div class="filter-list__item">
+                            <input class="filter-list__checkbox" type="checkbox" value="Arte 3D/2D" id="filterArte">
+                            <label class="filter-list__label" for="filterArte">Arte 3D/2D</label>
+                        </div>
+                        <div class="filter-list__item">
+                            <input class="filter-list__checkbox" type="checkbox" value="Sound Design" id="filterSound">
+                            <label class="filter-list__label" for="filterSound">Sound Design</label>
+                        </div>
+                        <div class="filter-list__item">
+                            <input class="filter-list__checkbox" type="checkbox" value="Design de Nível" id="filterDesign">
+                            <label class="filter-list__label" for="filterDesign">Design de Nível</label>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- COLUNA CENTRAL: Feed de Logs -->
+            <section class="col-lg-6">
+                <a href="../cad_logs/cad_logs.html" class="btn btn-primary mb-3 shadow-sm w-100 btn-create-log">
+                    + Criar Novo Log
+                </a>
+
+                <div id="logs-feed" class="logs-feed-container">
+                    <div class="alert alert-info text-center loading-message">Carregando logs...</div>
+                </div>
+            </section>
+
+            <!-- SIDEBAR DIREITA: Atividade Recente e Destaques -->
+            <aside class="col-lg-3">
+                 <div class="sidebar">
+                    <h6 class="sidebar__section-title">Atividade Recente</h6>
+                    <ul class="activity-list">
+                        <li class="activity-list__item"><span class="badge bg-info text-dark me-1">Log</span> Maria Santos criou um novo log</li>
+                        <li class="activity-list__item"><span class="badge bg-warning text-dark me-1">Edit</span> Carlos Lima editou um log</li>
+                        <li class="activity-list__item"><span class="badge bg-danger text-white me-1">Like</span> Você recebeu um like!</li>
+                    </ul>
+
+                    <hr class="sidebar__divider">
+                    <h6 class="sidebar__section-title">Desenvolvedores em Destaque</h6>
+                    <ul class="featured-devs-list">
+                        <li class="featured-devs-list__item">🥇 Roberto Tech (45 Logs)</li>
+                        <li class="featured-devs-list__item">🥈 Sofia Arts (38 Logs)</li>
+                    </ul>
+                 </div>
+            </aside>
+
+        </div>
+    </main>
+
+    <!-- Modal para Alertas (Usado pela função displayAlert no JS) -->
+    <div class="modal fade" id="customAlertModal" tabindex="-1" aria-labelledby="customAlertTitle" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title" id="customAlertTitle">Alerta</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          </div>
+          <div class="modal-body">
+            <p id="customAlertMessage"></p>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts (Bootstrap JS e seu JS customizado) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.8/js/bootstrap.bundle.min.js"></script>
+    <script src="index.js"></script>
+</body>
+</html>
+

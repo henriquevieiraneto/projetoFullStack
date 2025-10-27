@@ -1,0 +1,114 @@
+/* ========================================= */
+/* VARIÁVEIS DE COR */
+/* ========================================= */
+:root {
+    --primary-color: #007bff;
+    --secondary-color: #6c757d;
+    --success-color: #28a745;
+    --danger-color: #dc3545;
+    --light-bg: #f8f9fa;
+    --dark-bg: #343a40;
+    --text-color: #212529;
+    --card-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+}
+
+/* ========================================= */
+/* ESTILOS GERAIS */
+/* ========================================= */
+body {
+    background-color: var(--light-bg);
+    /* Se a fonte "Inter" estiver disponível, use-a. Caso contrário, fallback */
+    font-family: 'Inter', sans-serif, Arial, Helvetica;
+}
+
+.navbar-brand {
+    font-size: 1.5rem;
+}
+
+.main-container {
+    margin-top: 20px;
+}
+
+/* ========================================= */
+/* ESTILOS DA SIDEBAR */
+/* ========================================= */
+.sidebar {
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: var(--card-shadow);
+    margin-bottom: 20px;
+}
+
+/* ========================================= */
+/* ESTILOS DO FEED DE LOGS */
+/* ========================================= */
+#community-logs-feed {
+    display: flex;
+    flex-direction: column;
+    gap: 15px; /* Espaçamento entre os logs */
+}
+
+.log-card {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    padding: 15px;
+    box-shadow: var(--card-shadow);
+    border: 1px solid #e9ecef;
+    transition: all 0.2s;
+}
+
+.log-card:hover {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+    transform: translateY(-2px);
+}
+
+.log-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background-color: var(--primary-color);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.1rem;
+    margin-right: 10px;
+    flex-shrink: 0;
+}
+
+.log-metrics-detail {
+    display: flex;
+    gap: 20px;
+    font-size: 0.85rem;
+    color: var(--secondary-color);
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid #f1f1f1;
+}
+
+.log-actions .btn-link {
+    font-size: 0.9rem;
+    padding: 0;
+    text-decoration: none;
+}
+
+.log-actions .btn-like.text-danger {
+    color: var(--danger-color) !important;
+}
+
+/* ========================================= */
+/* RESPONSIVIDADE */
+/* ========================================= */
+@media (max-width: 768px) {
+    .sidebar {
+        margin-top: 10px;
+    }
+}

@@ -3,40 +3,39 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors'); // Para permitir requisições do Frontend
 const mysql = require('mysql2'); // Usaremos mysql2 para melhor performance
+const path = require('path'); // Módulo para lidar com caminhos de arquivo
 
 const app = express();
 const port = 3000;
 
 // 2. CONFIGURAÇÃO DO MIDDLEWARE
-// Permite que o servidor processe dados JSON e formulários
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
-// Configuração do CORS para permitir que o Frontend (porta 3000 ou 5500) acesse o Backend
-// O Frontend *deve* acessar pela porta 3000, mas o CORS é um bom backup.
+// Configuração do CORS
 app.use(cors({
-    origin: ['http://localhost:3000', 'http://127.0.0.1:5500'],
+    origin: ['http://localhost:3000', 'http://127.0.0.1:5500'], // Permite acesso do próprio servidor e do Live Server (para debug)
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
     credentials: true,
 }));
 
 // 3. CONFIGURAÇÃO DA CONEXÃO COM O BANCO DE DADOS (MySQL)
-// AS CREDENCIAIS FORAM ATUALIZADAS COM A NOVA SENHA: @Hvn2009
 const pool = mysql.createPool({
     connectionLimit: 10,
-    host: 'localhost', 
+    host: 'localhost',
     user: 'root', // Usuário padrão do MySQL/XAMPP
-    password: '@Hvn2009', // <--- NOVA SENHA APLICADA AQUI
+    password: '@Hvn2009', // Senha atualizada
     database: 'devhub' // Nome do banco criado via dump.sql
 }).promise(); // Usando .promise() para permitir async/await nas consultas
 
-// Rota estática para servir os arquivos HTML, CSS e JS do Frontend
-app.use('/view', express.static('src/view'));
-app.use('/style', express.static('src/style'));
+// 4. ROTAS ESTÁTICAS PARA SERVIR O FRONTEND
+// Servindo a pasta 'src' inteira sob o prefixo '/src'
+app.use('/src', express.static(path.join(__dirname, 'src')));
 
-// Rota principal para redirecionar para o dashboard
+// 5. ROTA PRINCIPAL: REDIRECIONA PARA A PÁGINA DE LOGIN (*** CORREÇÃO APLICADA AQUI ***)
 app.get('/', (req, res) => {
-    res.redirect('/view/index.html');
+    // Redireciona para o caminho correto da página de login dentro da pasta src/view/login
+    res.redirect('/src/view/login/login.html');
 });
 
 
@@ -44,13 +43,11 @@ app.get('/', (req, res) => {
 // ROTAS DE AUTENTICAÇÃO
 // =================================================================
 
-// 4. POST /cadastro - CADASTRO DE NOVO USUÁRIO
+// POST /cadastro - CADASTRO DE NOVO USUÁRIO
 app.post('/cadastro', async (req, res) => {
     const { nome, email, senha } = req.body;
 
-    // NOTA: Em um projeto real, a senha deveria ser hasheada aqui (ex: com bcrypt)
-    // Para simplificar, armazenaremos a senha como texto puro (TESTE)
-
+    // NOTA: Idealmente, hashear a senha aqui com bcrypt
     const query = 'INSERT INTO usuario (nome, email, senha) VALUES (?, ?, ?)';
     try {
         const [results] = await pool.query(query, [nome, email, senha]);
@@ -64,12 +61,12 @@ app.post('/cadastro', async (req, res) => {
     }
 });
 
-// 5. POST /login - LOGIN DE USUÁRIO
+// POST /login - LOGIN DE USUÁRIO
 app.post('/login', async (req, res) => {
     const { email, senha } = req.body;
-    
+
     const query = 'SELECT id, nome, senha FROM usuario WHERE email = ?';
-    
+
     try {
         const [rows] = await pool.query(query, [email]);
 
@@ -79,10 +76,9 @@ app.post('/login', async (req, res) => {
 
         const user = rows[0];
 
-        // Comparação da senha (texto puro vs. texto puro - simplificado)
+        // Comparação de senha (simplificada - usar bcrypt.compare em produção)
         if (user.senha === senha) {
-            // Sucesso! Retorna dados básicos (NÃO inclua a senha!)
-            return res.status(200).json({ 
+            return res.status(200).json({
                 message: 'Login bem-sucedido!',
                 id: user.id,
                 nome: user.nome
@@ -102,66 +98,95 @@ app.post('/login', async (req, res) => {
 // ROTAS DE LOGS (CRUD)
 // =================================================================
 
-// 6. POST /logs - CRIA NOVO LOG
+// POST /logs - CRIA NOVO LOG (Versão Final Limpa)
 app.post('/logs', async (req, res) => {
-    const { id_usuario, titulo, categoria, descricao_do_trabalho, horas_trabalhadas, linhas_codigo, bugs_corrigidos } = req.body;
-    
-    // Validação básica para garantir que o ID do usuário está presente
+    // Campos que o Frontend envia (cad_logs.js)
+    const { id_usuario, horas_trabalhadas, descricao, data_log, titulo, categoria, linhas_codigo, bugs_corrigidos } = req.body;
+
     if (!id_usuario) {
         return res.status(400).json({ message: 'ID do usuário é obrigatório.' });
     }
 
-    const query = `
-        INSERT INTO log_dev (id_usuario, titulo, categoria, descricao_do_trabalho, horas_trabalhadas, linhas_codigo, bugs_corrigidos) 
-        VALUES (?, ?, ?, ?, ?, ?, ?)
-    `;
-    const values = [id_usuario, titulo, categoria, descricao_do_trabalho, parseFloat(horas_trabalhadas), parseInt(linhas_codigo), parseInt(bugs_corrigidos)];
-    
+    // Tratamento de dados para garantir NULL ou valor padrão para campos ausentes/NaN
+    // CORREÇÃO: Usar string vazia '' para campos NOT NULL como titulo e categoria
+    const final_titulo = titulo || ''; // Usa string vazia se for null/undefined
+    const final_categoria = categoria || ''; // Usa string vazia se for null/undefined
+    const final_linhas_codigo = isNaN(parseInt(linhas_codigo)) ? null : parseInt(linhas_codigo);
+    const final_bugs_corrigidos = isNaN(parseInt(bugs_corrigidos)) ? null : parseInt(bugs_corrigidos);
+    const final_horas_trabalhadas = isNaN(parseFloat(horas_trabalhadas)) ? null : parseFloat(horas_trabalhadas);
+    const final_descricao_do_trabalho = descricao || null;
+    const final_data_log = data_log || null; // Pode ser NULL se o DB permitir ou se for data_registro
+
+    // Query com 7 campos (removendo data_log se a coluna for data_registro no DB)
+    const query =
+        `INSERT INTO log_dev
+        (id_usuario, titulo, categoria, descricao_do_trabalho, horas_trabalhadas, linhas_codigo, bugs_corrigidos)
+        VALUES (?, ?, ?, ?, ?, ?, ?)`; // 7 placeholders
+
+    // A ordem dos values DEVE bater com a ordem dos campos acima!
+    const values = [ // 7 valores
+        id_usuario,
+        final_titulo,
+        final_categoria,
+        final_descricao_do_trabalho,
+        final_horas_trabalhadas,
+        final_linhas_codigo,
+        final_bugs_corrigidos
+    ];
+
     try {
-        const [results] = await pool.query(query, values);
-        res.status(201).json({ message: 'Log registrado com sucesso!', id: results.insertId });
+        await pool.query(query, values);
+        res.status(201).json({ message: "Log cadastrado com sucesso!" });
     } catch (error) {
-        console.error('Erro ao registrar log:', error);
-        res.status(500).json({ message: 'Falha ao cadastrar log no banco de dados.' });
+        console.error("Erro fatal ao inserir log (SQL):", error);
+        res.status(500).json({
+            message: "Falha ao cadastrar log no banco de dados.",
+            errorDetail: error.sqlMessage // MENSAGEM DETALHADA DO MYSQL
+        });
     }
 });
 
-// 7. GET /logs - LISTA TODOS OS LOGS COM FILTRO/PESQUISA E PAGINAÇÃO
+// GET /logs - LISTA TODOS OS LOGS COM FILTRO/PESQUISA E PAGINAÇÃO
 app.get('/logs', async (req, res) => {
-    // Parâmetros de pesquisa e paginação
-    const { pagina = 1, quantidade = 10, categoria, search } = req.query;
+    // Inclui userId para saber se o usuário curtiu
+    const { pagina = 1, quantidade = 10, categoria, search, userId } = req.query;
     const offset = (parseInt(pagina) - 1) * parseInt(quantidade);
-    
+
     let baseQuery = `
-        SELECT 
-            ld.*, 
-            u.nome AS usuario_nome, 
-            (SELECT COUNT(*) FROM likes l WHERE l.id_log = ld.id) AS likes_count
+        SELECT
+            ld.*,
+            u.nome AS usuario_nome,
+            (SELECT COUNT(*) FROM likes l WHERE l.id_log = ld.id) AS likes_count,
+            -- Subquery para verificar se o usuário atual (userId) curtiu este log
+            EXISTS(SELECT 1 FROM likes l_user WHERE l_user.id_log = ld.id AND l_user.id_user = ?) AS usuarioCurtiu
         FROM log_dev ld
         JOIN usuario u ON ld.id_usuario = u.id
-        WHERE 1=1 
+        WHERE 1=1
     `;
-    const params = [];
+    // Adiciona o userId como primeiro parâmetro para a subquery EXISTS
+    const params = [userId || null]; // Usa null se userId não for fornecido
 
-    // Adiciona filtro por categoria
     if (categoria) {
         baseQuery += ' AND ld.categoria = ?';
         params.push(categoria);
     }
-    
-    // Adiciona filtro por pesquisa (título ou descrição)
+
     if (search) {
         baseQuery += ' AND (ld.titulo LIKE ? OR ld.descricao_do_trabalho LIKE ?)';
         params.push(`%${search}%`, `%${search}%`);
     }
 
-    // Ordenação e Limite/Offset
     baseQuery += ' ORDER BY ld.data_registro DESC LIMIT ? OFFSET ?';
     params.push(parseInt(quantidade), offset);
 
     try {
         const [logs] = await pool.query(baseQuery, params);
-        res.status(200).json(logs);
+        // Converte o resultado de usuarioCurtiu para booleano
+        const formattedLogs = logs.map(log => ({
+            ...log,
+            usuarioCurtiu: Boolean(log.usuarioCurtiu)
+        }));
+        res.status(200).json(formattedLogs);
     } catch (error) {
         console.error('Erro ao buscar logs:', error);
         res.status(500).json({ message: 'Erro ao buscar logs no banco de dados.' });
@@ -173,12 +198,12 @@ app.get('/logs', async (req, res) => {
 // ROTAS DE MÉTRICAS E LIKES
 // =================================================================
 
-// 8. GET /metricas-usuario/:id - MÉTRICAS INDIVIDUAIS
+// GET /metricas-usuario/:id - MÉTRICAS INDIVIDUAIS
 app.get('/metricas-usuario/:id', async (req, res) => {
-    const userId = req.params.id;
-    
+    const userIdParam = req.params.id;
+
     const query = `
-        SELECT 
+        SELECT
             COUNT(ld.id) AS total_logs,
             SUM(ld.horas_trabalhadas) AS horas_trabalhadas,
             SUM(ld.bugs_corrigidos) AS bugs_corrigidos
@@ -187,12 +212,9 @@ app.get('/metricas-usuario/:id', async (req, res) => {
     `;
 
     try {
-        const [rows] = await pool.query(query, [userId]);
-        
-        // Se a query retornar um resultado (mesmo que todos os valores sejam NULL),
-        // ele estará em rows[0].
+        const [rows] = await pool.query(query, [userIdParam]);
+
         if (rows.length > 0) {
-            // Converte NULLs para 0 para evitar problemas de tipo no Frontend
             const metricas = {
                 total_logs: parseInt(rows[0].total_logs) || 0,
                 horas_trabalhadas: parseFloat(rows[0].horas_trabalhadas) || 0.0,
@@ -201,7 +223,6 @@ app.get('/metricas-usuario/:id', async (req, res) => {
             return res.status(200).json(metricas);
         }
 
-        // Caso o usuário não tenha logs
         res.status(200).json({ total_logs: 0, horas_trabalhadas: 0.0, bugs_corrigidos: 0 });
 
     } catch (error) {
@@ -210,52 +231,58 @@ app.get('/metricas-usuario/:id', async (req, res) => {
     }
 });
 
-// 9. POST /likes - ADICIONA UM LIKE
+// POST /likes - ADICIONA UM LIKE
 app.post('/likes', async (req, res) => {
     const { id_log, id_user } = req.body;
 
+    // Validação
+    if (!id_log || !id_user) {
+        return res.status(400).json({ message: 'IDs de log e usuário são obrigatórios.' });
+    }
+
     const checkQuery = 'SELECT id FROM likes WHERE id_user = ? AND id_log = ?';
-    
+
     try {
         const [existingLikes] = await pool.query(checkQuery, [id_user, id_log]);
-        
-        // Verifica se o like já existe
+
         if (existingLikes.length > 0) {
-            // Retorna status 409 (Conflict) se a entrada duplicada for detectada
-            return res.status(409).json({ message: 'Like já existente.' }); 
+            return res.status(409).json({ message: 'Like já existente.' });
         }
 
-        // Se não existir, insere
         const insertQuery = 'INSERT INTO likes (id_user, id_log) VALUES (?, ?)';
         await pool.query(insertQuery, [id_user, id_log]);
-        
+
         res.status(201).json({ message: 'Like registrado com sucesso.' });
-        
+
     } catch (error) {
         console.error('Erro ao registrar like:', error);
+        // Verifica erro de chave estrangeira (usuário ou log não existe)
+        if (error.code === 'ER_NO_REFERENCED_ROW_2') {
+             return res.status(404).json({ message: 'Usuário ou Log não encontrado.' });
+        }
         res.status(500).json({ message: 'Erro interno ao registrar like.' });
     }
 });
 
-// 10. DELETE /likes - REMOVE UM LIKE (usa query parameters)
+// DELETE /likes - REMOVE UM LIKE (usa query parameters)
 app.delete('/likes', async (req, res) => {
-    const { id_log, id_user } = req.query; // Pega o ID do log e usuário dos query parameters
-    
+    const { id_log, id_user } = req.query;
+
     if (!id_log || !id_user) {
         return res.status(400).json({ message: 'IDs de log e usuário são obrigatórios.' });
     }
-    
+
     const deleteQuery = 'DELETE FROM likes WHERE id_log = ? AND id_user = ?';
-    
+
     try {
         const [results] = await pool.query(deleteQuery, [id_log, id_user]);
 
         if (results.affectedRows === 0) {
             return res.status(404).json({ message: 'Like não encontrado para remoção.' });
         }
-        
+
         res.status(200).json({ message: 'Like removido com sucesso.' });
-        
+
     } catch (error) {
         console.error('Erro ao remover like:', error);
         res.status(500).json({ message: 'Erro interno ao remover like.' });
@@ -264,6 +291,7 @@ app.delete('/likes', async (req, res) => {
 
 // 11. INICIA O SERVIDOR
 app.listen(port, () => {
-    console.log(`Servidor rodando na porta: http://localhost:${port}`); //
-    console.log(`Acesse o Frontend em: http://localhost:${port}/view/index.html`);
+    console.log(`Servidor rodando na porta: http://localhost:${port}`);
+    console.log(`Acesse o Frontend em: http://localhost:${port}/src/view/login/login.html`); // Link inicial agora é o login
 });
+
