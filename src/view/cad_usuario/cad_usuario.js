@@ -1,148 +1,115 @@
-// Importações de Firebase (necessárias para as funções de criação de usuário)
-// As importações reais são feitas pelas tags <script type="module"> no HTML correspondente.
-// Estas linhas servem para clareza e simulação de dependências.
-// import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-// import { createUserWithEmailAndPassword, getAuth } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-// import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+// --- INÍCIO DA INICIALIZAÇÃO E CONFIGURAÇÃO ---
 
-// Variáveis globais (Firebsase SDKs)
-const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-let auth;
-let db;
+// URL Base da API (Onde seu servidor app.js está rodando)
+const API_URL = 'http://localhost:3000';
 
-// Função para exibir mensagens na UI
+// --- FUNÇÕES DE UTILIDADE ---
+
+/**
+ * Exibe mensagens de status ou erro no formulário.
+ * @param {string} message - A mensagem a ser exibida.
+ * @param {string} type - 'success', 'danger', 'info', ou 'warning'.
+ */
 function displayMessage(message, type = 'danger') {
-    const mensagemStatus = document.getElementById('mensagemStatus');
+    // ID do elemento de mensagem no 'cad_usuario.html'
+    const mensagemStatus = document.getElementById('mensagemStatus'); 
     if (!mensagemStatus) {
         console.error("Elemento 'mensagemStatus' não encontrado no DOM.");
         return;
     }
     mensagemStatus.textContent = message;
-    // Usa classes para estilo
-    mensagemStatus.className = `text-center small font-medium mt-2 text-sm ${
-        type === 'success' ? 'text-green-600' :
-        type === 'info' ? 'text-blue-600' :
-        type === 'warning' ? 'text-yellow-600' :
-        'text-red-600' // Padrão é danger
-    }`;
+    
+    // Define a classe de cor (Bootstrap)
+    mensagemStatus.className = 'text-center small fw-bold mt-2'; // Reset
+    if (type === 'success') {
+        mensagemStatus.classList.add('text-success');
+    } else if (type === 'info') {
+        mensagemStatus.classList.add('text-info');
+    } else if (type === 'warning') {
+        mensagemStatus.classList.add('text-warning');
+    } else {
+        mensagemStatus.classList.add('text-danger'); // Padrão
+    }
+
+    // Esconde a mensagem após 5 segundos
     setTimeout(() => {
         if (mensagemStatus) {
             mensagemStatus.textContent = '';
-            mensagemStatus.className = 'text-center small font-medium mt-2';
         }
     }, 5000);
 }
 
-// Inicializa o Firebase (apenas o essencial para o cadastro)
-function initFirebase() {
-    try {
-        if (Object.keys(firebaseConfig).length === 0) throw new Error("Configuração do Firebase vazia.");
-        if (typeof firebase === 'undefined' || !firebase.getApps) {
-             console.error("Firebase SDK não está carregado. Verifique os imports no HTML.");
-             return;
-        }
 
-        if (firebase.getApps().length === 0) {
-            app = firebase.initializeApp(firebaseConfig);
-        } else {
-             app = firebase.getApp();
-        }
-        
-        auth = firebase.getAuth(app);
-        db = firebase.getFirestore(app);
-    } catch (error) {
-        console.error("Erro ao inicializar Firebase para Cadastro:", error);
-        displayMessage("Erro crítico ao conectar com serviços de autenticação.", "danger");
-    }
-}
+// --- LÓGICA DE CADASTRO (API Express/MySQL) ---
 
-// Função para salvar dados extras no Firestore (nome, email)
-async function saveUserData(userId, nome, email) {
-    if (!db) return;
-    try {
-        const userRef = firebase.doc(db, "users", userId); // Coleção 'users'
-        await firebase.setDoc(userRef, { nome: nome, email: email, createdAt: new Date() });
-        console.log("Dados do usuário salvos no Firestore.");
-    } catch (error) {
-        console.error("Erro ao salvar dados no Firestore:", error);
-    }
-}
-
-// Lógica principal de submissão do formulário de registro
+/**
+ * Função principal para lidar com o envio do formulário de cadastro.
+ * @param {Event} event - O evento de submit.
+ */
 async function handleRegister(event) {
-    event.preventDefault();
+    event.preventDefault(); // Impede o refresh da página
 
-    // Seleciona os inputs (IDs devem corresponder ao cad_usuario.html)
+    // IDs dos inputs no 'cad_usuario.html'
     const emailInput = document.getElementById('email-register');
     const passwordInput = document.getElementById('senha-register');
     const nomeInput = document.getElementById('nome-register');
 
     const email = emailInput ? emailInput.value.trim() : null;
-    const password = passwordInput ? passwordInput.value : null;
-    const nome = nomeInput ? nomeInput.value.trim() : '';
+    const password = passwordInput ? passwordInput.value : null; // A variável local ainda é 'password'
+    const nome = nomeInput ? nomeInput.value.trim() : null;
 
     if (!email || !password || !nome) {
         displayMessage("Por favor, preencha todos os campos.", "warning");
         return;
     }
 
-    displayMessage("Registrando...", "info");
+    displayMessage("Processando registro...", "info");
     const submitButton = event.target.querySelector('button[type="submit"]');
     if(submitButton) submitButton.disabled = true;
 
     try {
-        // 1. Cria o usuário no Firebase Auth (Assume que as funções Firebase estão no escopo global)
-        const userCredential = await firebase.createUserWithEmailAndPassword(auth, email, password);
-        const userId = userCredential.user.uid;
-
-        // 2. Salva os dados no Firestore
-        await saveUserData(userId, nome, email);
-
-        // 3. (Opcional) Envia dados para a API Backend (MySQL) para compatibilidade
-        const backendResponse = await fetch('http://localhost:3000/cadastro', {
+        // Envia para a rota /cadastro do app.js
+        const response = await fetch(`${API_URL}/cadastro`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            // A API de cadastro do seu projeto espera 'nome', 'email', 'senha'
+            // CORREÇÃO: Alinha a chave JSON com o que o app.js espera ('senha')
             body: JSON.stringify({ nome: nome, email: email, senha: password }) 
         });
-        
-        if (!backendResponse.ok) {
-            console.warn("Aviso: Falha ao registrar no MySQL/Backend, mas o Firebase Auth foi bem-sucedido.");
+
+        const data = await response.json(); // Tenta ler o JSON da resposta
+
+        if (response.ok) { // Status 201 (Created)
+            displayMessage("Cadastro realizado com sucesso! Redirecionando para o login...", "success");
+
+            // Redireciona para o Login
+            setTimeout(() => {
+                window.location.href = '../login/login.html'; 
+            }, 1000); 
+
+        } else {
+            // Erro do servidor (ex: 409 Email já cadastrado, 500 Erro interno)
+            throw new Error(data.message || "Ocorreu um erro no servidor.");
         }
 
-        displayMessage("Cadastro realizado com sucesso! Redirecionando para login.", "success");
-        
-        // Redireciona para o login
-        setTimeout(() => {
-            // Caminho CORRETO para o login (../login/login.html)
-            window.location.href = '../login/login.html';
-        }, 1000);
-
     } catch (error) {
-        console.error("Erro durante o registro:", error);
-        
-        let friendlyMessage = "Ocorreu um erro. Tente novamente.";
-        if (error.code === 'auth/email-already-in-use') friendlyMessage = "Este email já está cadastrado.";
-        else if (error.code === 'auth/weak-password') friendlyMessage = "A senha é muito fraca (mínimo 6 caracteres).";
-        else if (error.code === 'auth/invalid-email') friendlyMessage = "O formato do email é inválido.";
-        else if (error.code === 'auth/operation-not-allowed') friendlyMessage = "Operação não permitida. Verifique as configurações do Firebase.";
-
-        displayMessage(`Falha no registro: ${friendlyMessage}`, "danger");
-        if(submitButton) submitButton.disabled = false;
+        console.error("Erro no cadastro:", error);
+        displayMessage(`Falha no cadastro: ${error.message}`, "danger");
+        if(submitButton) submitButton.disabled = false; // Reabilita o botão
     }
 }
 
-
-// Adiciona listener ao formulário de registro
+// --- INICIALIZAÇÃO DA PÁGINA ---
 document.addEventListener('DOMContentLoaded', () => {
-    initFirebase(); // Inicializa o Firebase
+    // Esta página não precisa de verificação de login, 
+    // pois é usada para criar uma conta.
 
-    // O HTML de cad_usuario só deve ter o formulário de registro
-    const registerForm = document.getElementById('register-form'); 
+    const registerForm = document.getElementById('register-form');
     
     if (registerForm) {
         registerForm.addEventListener('submit', handleRegister);
     } else {
-        console.error("Formulário de registro ('register-form') não encontrado no DOM.");
+        // Este erro não deve mais acontecer se o HTML estiver correto
+        console.error("Formulário 'register-form' não encontrado.");
     }
 });
+

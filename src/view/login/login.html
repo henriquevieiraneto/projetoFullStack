@@ -1,108 +1,55 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DevHub - Entrar</title>
-    <!-- Carregamento do Tailwind CSS (CDN) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Configurações de fonte Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <title>DevHub - Login</title>
     
-    <!-- Link para o arquivo CSS separado -->
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+    <!-- CSS Customizado -->
     <link rel="stylesheet" href="login.css">
+    
+    <!-- Imports do Firebase (Módulos JS) -->
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js"></script>
+    <script type="module" src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js"></script>
 </head>
-<body class="bg-gray-50 flex items-center justify-center min-h-screen p-4">
+<body class="login-body">
 
-    <!-- Card Principal de Login/Registro -->
-    <div id="loginCard" class="w-full max-w-md bg-white rounded-xl shadow-2xl p-8 space-y-6 transition-all duration-300">
+    <div class="login-container shadow-lg">
         
-        <h1 class="text-3xl font-extrabold text-center text-blue-600 tracking-tight">
-            Dev<span class="text-gray-800">Hub</span>
-        </h1>
-        <p class="text-center text-gray-500">
-            Acompanhe seu desenvolvimento e compartilhe logs.
-        </p>
-
-        <!-- Área de Mensagem de Erro -->
-        <div id="errorMessage" class="hidden p-3 text-sm text-red-800 bg-red-100 rounded-lg" role="alert">
-            <!-- Mensagem de erro será injetada aqui -->
-        </div>
-
-        <!-- 1. Formulário de Login (Visível por padrão) -->
-        <form id="loginForm" class="space-y-4">
-            <h2 class="text-2xl font-semibold text-gray-700 text-center">Entrar</h2>
-
-            <div>
-                <label for="loginEmail" class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" id="loginEmail" placeholder="seuemail@exemplo.com"
-                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
-            </div>
-
-            <div>
-                <label for="loginPassword" class="block text-sm font-medium text-gray-700">Senha</label>
-                <input type="password" id="loginPassword" placeholder="••••••••"
-                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
-            </div>
-
-            <button type="submit" id="btnLogin"
-                    class="w-full py-2 px-4 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition duration-150 transform hover:scale-[1.01]">
-                Acessar DevHub
-            </button>
-        </form>
-
-        <!-- 2. Formulário de Registro (Oculto por padrão) -->
-        <form id="registerForm" class="space-y-4 hidden">
-            <h2 class="text-2xl font-semibold text-gray-700 text-center">Criar Conta</h2>
-
-            <div>
-                <label for="registerEmail" class="block text-sm font-medium text-gray-700">Email</label>
-                <input type="email" id="registerEmail" placeholder="seuemail@exemplo.com"
-                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
-            </div>
-
-            <div>
-                <label for="registerPassword" class="block text-sm font-medium text-gray-700">Senha (mín. 6 caracteres)</label>
-                <input type="password" id="registerPassword" placeholder="••••••••"
-                       class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500" required>
-            </div>
-
-            <button type="submit" id="btnRegister"
-                    class="w-full py-2 px-4 bg-green-500 text-white font-semibold rounded-lg shadow-md hover:bg-green-600 transition duration-150 transform hover:scale-[1.01]">
-                Registrar e Entrar
-            </button>
-        </form>
-
-        <!-- Divisor -->
-        <div class="relative">
-            <div class="absolute inset-0 flex items-center">
-                <div class="w-full border-t border-gray-300"></div>
-            </div>
-            <div class="relative flex justify-center text-sm">
-                <span class="px-2 bg-white text-gray-500">ou</span>
-            </div>
-        </div>
-
-        <!-- Opções Secundárias -->
-        <div class="flex flex-col space-y-3">
-            <button id="btnGuest"
-                    class="w-full py-2 px-4 border border-gray-300 bg-gray-100 text-gray-700 font-semibold rounded-lg shadow-sm hover:bg-gray-200 transition duration-150">
-                Acessar como Convidado
-            </button>
+        <!-- Formulário de Login -->
+        <form id="login-form">
+            <h2 class="form-title">Acessar DevHub</h2>
             
-            <div class="text-center text-sm">
-                <p id="toggleToRegister" class="text-blue-600 hover:text-blue-800 cursor-pointer hidden">
-                    Não tem conta? <span class="font-semibold">Crie uma agora!</span>
-                </p>
-                <p id="toggleToLogin" class="text-blue-600 hover:text-blue-800 cursor-pointer">
-                    Já tem conta? <span class="font-semibold">Fazer Login</span>
-                </p>
+            <div class="mb-3">
+                <label for="email-login" class="form-label">Email</label>
+                <input type="email" class="form-control" id="email-login" required>
             </div>
-        </div>
-
+            
+            <div class="mb-3">
+                <label for="senha-login" class="form-label">Senha</label>
+                <input type="password" class="form-control" id="senha-login" required>
+            </div>
+            
+            <button type="submit" class="btn btn-primary w-100">Acessar DevHub</button>
+            
+            <!-- CORREÇÃO 1: Texto do link e caminho corretos -->
+            <p class="text-center small mt-3">
+                Não tem uma conta? 
+                <!-- Aponta para a pasta de cadastro -->
+                <a href="../cad_usuario/cad_usuario.html" id="toggle-register" class="text-primary fw-bold">Cadastre-se!</a>
+            </p>
+        </form>
+        
+        <!-- Mensagens de Status e Erro -->
+        <div id="mensagemStatus" class="text-center small font-medium mt-2"></div>
     </div>
 
-    <!-- Link para o arquivo JavaScript separado (com type="module" para imports do Firebase) -->
-    <script type="module" src="login.js"></script>
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <script src="login.js" type="module"></script>
 </body>
 </html>
+

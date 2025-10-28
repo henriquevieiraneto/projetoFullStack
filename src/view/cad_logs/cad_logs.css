@@ -1,325 +1,71 @@
-/* ==================================== */
-/* 1. ESTILOS GERAIS E TEMA ESCURO */
-/* ==================================== */
-:root {
-    --color-bg-body: #111827; /* gray-900 */
-    --color-bg-container: #1f2937; /* gray-800 */
-    --color-text-primary: #f9fafb; /* gray-50 */
-    --color-text-secondary: #9ca3af; /* gray-400 */
-    --color-border-default: #4b5563; /* gray-600 */
-    --color-primary-blue: #2563eb; /* blue-600 */
-    --color-primary-blue-hover: #1d4ed8; /* blue-700 */
-    --font-family-inter: 'Inter', sans-serif;
-    font-family: var(--font-family-inter);
-}
+/* Importa a fonte (Opcional, mas mantém consistência) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-body {
-    background-color: var(--color-bg-body);
-    color: var(--color-text-primary);
+body.cad-logs-body {
+    background-color: #f4f7f6; /* Fundo cinza claro */
+    font-family: 'Inter', sans-serif;
+    /* Garante que o container flex (do HTML) possa centralizar verticalmente */
     min-height: 100vh;
-    padding: 1rem; /* p-4 */
 }
 
-/* Responsividade para desktop (sm:p-8) */
-@media (min-width: 640px) {
-    body {
-        padding: 2rem;
-    }
-}
-
-#app {
-    max-width: 1280px; /* max-w-7xl */
-    margin: 0 auto; /* mx-auto */
-}
-
-/* ==================================== */
-/* 2. CABEÇALHO E TÍTULOS */
-/* ==================================== */
-.header {
-    margin-bottom: 2rem; /* mb-8 */
-}
-
-.header h1 {
-    font-size: 2.25rem; /* text-4xl */
-    font-weight: 800; /* font-extrabold */
-    color: white;
-    margin-bottom: 0.5rem; /* mb-2 */
-}
-
-.header p {
-    color: var(--color-text-secondary);
-}
-
-/* ==================================== */
-/* 3. SEÇÃO DE CONTROLES E FILTROS */
-/* ==================================== */
-.controls-section {
-    background-color: var(--color-bg-container);
-    padding: 1.5rem; /* p-6 (médio) */
-    border-radius: 0.75rem; /* rounded-xl */
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-    margin-bottom: 2rem; /* mb-8 */
-    display: flex;
-    flex-direction: column;
-    gap: 1rem; /* gap-4 */
-    align-items: center;
-}
-
-/* Responsividade para layout de filtro em desktop (md:flex-row) */
-@media (min-width: 768px) {
-    .controls-section {
-        flex-direction: row;
-        padding: 1rem 1.5rem; /* p-4 sm:p-6 ajustado para manter a altura */
-    }
-}
-
-.filter-group {
-    width: 100%; /* w-full */
-    flex-grow: 1; /* flex-grow */
-}
-
-.filter-input, .filter-select {
+/* O HTML usa "container d-flex justify-content-center align-items-center"
+   Esta classe .form-container define o card branco */
+.form-container {
+    background-color: #ffffff;
+    border-radius: 0.75rem; /* 12px */
+    padding: 2.5rem; /* 40px */
     width: 100%;
-    background-color: #374151; /* gray-700 */
-    color: var(--color-text-primary);
-    border: 1px solid var(--color-border-default);
-    border-radius: 0.5rem; /* rounded-lg */
-    padding: 0.75rem; /* p-3 */
-    transition: border-color 150ms, box-shadow 150ms;
+    max-width: 700px; /* Define a largura máxima do formulário */
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    border: 1px solid #e9ecef;
 }
 
-.filter-input:focus, .filter-select:focus {
-    outline: none;
-    border-color: var(--color-primary-blue);
-    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.5); /* focus:ring-blue-500 */
-}
-
-.update-button {
-    width: 100%; /* w-full */
-    flex-shrink: 0; /* flex-shrink-0 */
-    background-color: var(--color-primary-blue);
-    color: white;
-    font-weight: 600;
-    padding: 0.75rem 1.5rem; /* py-3 px-6 */
-    border-radius: 0.5rem; /* rounded-lg */
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    transition: all 200ms ease;
-    cursor: pointer;
-    border: none;
-}
-
-.update-button:hover {
-    background-color: var(--color-primary-blue-hover);
-    transform: scale(1.01);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-}
-
-.update-button:active {
-    transform: scale(0.98);
-}
-
-@media (min-width: 768px) {
-    .update-button {
-        width: auto; /* md:w-auto */
-    }
-}
-
-/* ==================================== */
-/* 4. CONTAINER DE LOGS */
-/* ==================================== */
-.log-container {
-    height: 70vh;
-    overflow-y: auto;
-    padding-right: 0.5rem; /* pr-2 */
-}
-
-/* Estilo para a barra de rolagem (WebKit) */
-.log-container::-webkit-scrollbar {
-    width: 8px;
-    background-color: #1f2937;
-}
-
-.log-container::-webkit-scrollbar-thumb {
-    background-color: #4b5563;
-    border-radius: 4px;
-}
-
-.log-container::-webkit-scrollbar-thumb:hover {
-    background-color: #6b7280;
-}
-
-/* ==================================== */
-/* 5. ENTRADAS DE LOG (CARDS) */
-/* ==================================== */
-.log-entry {
-    padding: 1rem; /* p-4 */
-    margin-bottom: 0.75rem; /* mb-3 */
-    border-radius: 0.75rem; /* rounded-xl */
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    border-left-width: 4px;
-    border-left-style: solid;
-    transition: all 0.2s ease-in-out;
-    cursor: pointer;
-    border: 1px solid transparent;
-}
-
-.log-entry:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
-    border-color: #374151; /* gray-700 no hover */
-}
-
-/* Container de meta-dados (Data, Nível, Usuário) */
-.log-metadata {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: flex-start;
-    margin-bottom: 0.25rem; /* mb-1 */
-}
-
-@media (min-width: 640px) {
-    .log-metadata {
-        flex-direction: row;
-        align-items: center;
-    }
-}
-
-.metadata-group {
-    display: flex;
-    align-items: center;
-    gap: 1rem; /* space-x-4 */
-    margin-bottom: 0.5rem; /* mb-2 */
-}
-
-@media (min-width: 640px) {
-    .metadata-group {
-        margin-bottom: 0; /* sm:mb-0 */
-    }
-}
-
-.log-timestamp {
-    font-size: 0.75rem; /* text-xs */
-    font-family: monospace; /* font-mono */
-    color: var(--color-text-secondary);
-}
-
-.log-user-info {
-    font-size: 0.875rem; /* text-sm */
-    font-weight: 500;
-    color: #d1d5db; /* gray-300 */
-}
-
-.log-user-info span.id-label {
-    color: #6b7280; /* gray-500 */
-    margin-right: 0.25rem;
-}
-
-.log-user-info span.entity-name {
-    color: var(--color-text-secondary);
-}
-
-.log-message {
-    color: #e5e7eb; /* gray-200 */
-    font-size: 1rem; /* text-base */
-    word-break: break-word;
-    white-space: pre-wrap; /* Para manter quebras de linha/espaços da mensagem */
-}
-
-/* ==================================== */
-/* 6. CORES DOS NÍVEIS (LEVEL COLORS) */
-/* ==================================== */
-
-/* Cores de Borda (log-*) */
-.log-error { border-left-color: #ef4444; } /* Vermelho 500 */
-.log-warning { border-left-color: #f59e0b; } /* Amarelo 500 */
-.log-info { border-left-color: #3b82f6; } /* Azul 500 */
-.log-success { border-left-color: #10b981; } /* Verde 500 */
-.log-debug { border-left-color: #6366f1; } /* Índigo 500 */
-.log-default-border { border-left-color: #4b5563; }
-
-/* Cores de Fundo (log-*-bg) */
-.log-error-bg { background-color: rgba(127, 29, 29, 0.3); } /* red-900/30 */
-.log-warning-bg { background-color: rgba(120, 53, 15, 0.3); } /* yellow-900/30 */
-.log-info-bg { background-color: rgba(30, 64, 175, 0.3); } /* blue-900/30 */
-.log-success-bg { background-color: rgba(4, 120, 87, 0.3); } /* green-900/30 */
-.log-debug-bg { background-color: rgba(55, 48, 163, 0.3); } /* indigo-900/30 */
-.log-default-bg { background-color: var(--color-bg-container); }
-
-/* Cores dos Badges (badge-*) */
-.log-level-badge {
-    padding: 0.125rem 0.5rem; /* px-2 py-0.5 */
-    font-size: 0.75rem; /* text-xs */
-    font-weight: 600;
-    border-radius: 9999px; /* rounded-full */
-    color: white;
-}
-
-.badge-error { background-color: #dc2626; } /* red-600 */
-.badge-warning { background-color: #d97706; } /* yellow-600 */
-.badge-info { background-color: #2563eb; } /* blue-600 */
-.badge-success { background-color: #059669; } /* green-600 */
-.badge-debug { background-color: #4f46e5; } /* indigo-600 */
-
-
-/* ==================================== */
-/* 7. ESTILOS DE ESTADO (Vazio / Loading) */
-/* ==================================== */
-
-.empty-state {
+.form-title {
+    font-weight: 700;
     text-align: center;
-    padding: 5rem 0; /* py-20 */
-    color: var(--color-text-secondary);
+    margin-bottom: 1.5rem; /* 24px */
+    color: #333; /* Cor escura para o título */
 }
 
-.empty-state svg {
-    width: 3rem; /* w-12 */
-    height: 3rem; /* h-12 */
-    margin: 0 auto 1rem; /* mx-auto mb-4 */
-    stroke: var(--color-text-secondary);
+/* A CORREÇÃO CRÍTICA para o "Texto Invisível" (visto em image_42a286.png)
+  Força os inputs, selects e placeholders a terem uma cor de texto escura.
+*/
+.form-control,
+.form-select {
+    color: #212529 !important; /* Texto escuro (preto/cinza escuro) */
+    background-color: #ffffff; /* Fundo branco */
 }
 
-.empty-state p {
-    font-size: 1.25rem; /* text-xl */
-    margin-bottom: 0.5rem;
+/* Corrigir placeholders (que também estavam invisíveis) */
+.form-control::placeholder,
+.form-select::placeholder {
+    color: #6c757d !important; /* Cinza secundário do Bootstrap */
+    opacity: 1; /* Garante que não esteja transparente */
 }
 
-#loading-indicator {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    padding: 3rem 0; /* py-12 */
-    color: #60a5fa; /* blue-400 */
-    font-size: 1.125rem; /* text-lg */
+/* Cor do texto ao focar (para garantir) */
+.form-control:focus,
+.form-select:focus {
+    color: #212529;
+    background-color: #ffffff;
 }
 
-#loading-indicator span:last-child {
-    margin-left: 1rem; /* ml-4 */
+/* Cor do texto para as <option> dentro do <select> */
+.form-select option {
+    color: #212529;
+    background-color: #ffffff;
 }
 
-/* Estilização para o indicador de carregamento (simples) */
-.loading-dot {
-    width: 0.75rem; /* w-3 */
-    height: 0.75rem; /* h-3 */
-    background-color: #60a5fa; /* blue-400 */
-    border-radius: 50%; /* rounded-full */
-    margin: 0 0.25rem; /* mx-1 */
-    animation: bounce 1s infinite;
+/* Garante que o texto da label seja visível */
+.form-label {
+    color: #495057; /* Cinza escuro para labels */
+    font-weight: 500;
 }
 
-.loading-dot:nth-child(2) {
-    animation-delay: 0.2s;
+/* Classe auxiliar para esconder mensagens de erro/sucesso */
+.hidden {
+    display: none;
 }
 
-.loading-dot:nth-child(3) {
-    animation-delay: 0.4s;
-}
-
-@keyframes bounce {
-    0%, 80%, 100% {
-        transform: scale(0);
-    }
-    40% {
-        transform: scale(1.0);
-    }
-}

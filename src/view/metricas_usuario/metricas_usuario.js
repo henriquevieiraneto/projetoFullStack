@@ -24,426 +24,395 @@ if (!usuarioLogado) {
 }
 // --- FIM DA VERIFICAÇÃO DE AUTENTICAÇÃO ---
 
-// ----------------------------------------------------
-// IMPORTS EXTERNOS (D3.js e Firebase)
-// ----------------------------------------------------
-// Assumimos que D3.js e Firebase SDKs são carregados via <script> tags no HTML
+// -------------------------------------------------------------------------
+// SÓ EXECUTA SE O USUÁRIO FOR VÁLIDO
+// -------------------------------------------------------------------------
 
-// ----------------------------------------------------
-// VARIÁVEIS GLOBAIS (Configuração do Canvas/Firebase)
-// ----------------------------------------------------
+if (typeof usuario !== 'undefined' && usuario) {
 
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'devhub-default-app';
-const firebaseConfig = JSON.parse(typeof __firebase_config !== 'undefined' ? __firebase_config : '{}');
-const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+    // URL Base da API (Seu servidor app.js)
+    const API_URL = 'http://localhost:3000';
+    let userId = usuario.id;
+    let editingUserId = null; // Controla se estamos editando ou criando um usuário
 
-let app, auth, db;
-let userId = usuario ? usuario.id : null; // Usa o ID do usuário já validado
+    // ----------------------------------------------------
+    // REFERÊNCIAS DE ELEMENTOS UI
+    // ----------------------------------------------------
+    const statusMessageDiv = document.getElementById('statusMessage'); 
+    const loadingIndicator = document.getElementById('loadingIndicator'); 
+    const userNameElement = document.getElementById('nome-usuario-metricas'); 
+    
+    // NOVOS Elementos para CRUD de Usuário
+    const userModalEl = document.getElementById('user-crud-modal');
+    let userModalInstance = null; // Instância do Modal Bootstrap
+    const userForm = document.getElementById('user-form');
+    const userModalTitle = document.getElementById('user-modal-title');
+    const userTableBody = document.getElementById('user-table-body');
+    const btnOpenUserModal = document.getElementById('btn-open-user-modal');
 
-// Variáveis para o Gráfico D3.js
-const MARGIN = { top: 20, right: 30, bottom: 50, left: 40 };
-let currentChartData = []; 
+    // ----------------------------------------------------
+    // FUNÇÕES DE UTILIDADE E UI
+    // ----------------------------------------------------
 
-// ----------------------------------------------------
-// REFERÊNCIAS DE ELEMENTOS UI
-// ----------------------------------------------------
-// Elementos UI
-const statusMessageDiv = document.getElementById('statusMessage'); 
-const loadingIndicator = document.getElementById('loadingIndicator'); 
-const userNameElement = document.getElementById('nome-usuario-metricas'); 
-// A variável MARGIN está definida acima para uso em D3.js
-
-// ----------------------------------------------------
-// FUNÇÕES DE UTILIDADE E UI
-// ----------------------------------------------------
-
-/**
- * Exibe uma mensagem de erro na UI (usando statusMessageDiv).
- * @param {string} message Mensagem de erro.
- */
-const displayError = (message) => {
-    if (statusMessageDiv) {
-        // Estilo Tailwind (vermelho)
-        statusMessageDiv.className = 'p-4 mb-6 text-sm text-red-800 bg-red-100 rounded-lg'; 
-        statusMessageDiv.textContent = `Erro: ${message}`;
-        statusMessageDiv.classList.remove('hidden');
-        setTimeout(() => statusMessageDiv.classList.add('hidden'), 5000);
-    } else {
-        console.error("Erro:", message); 
-    }
-};
-
-/**
- * Exibe uma mensagem informativa na UI.
- * @param {string} message Mensagem informativa.
- */
-const displayInfo = (message) => {
-     if (statusMessageDiv) {
-        // Estilo Tailwind (azul)
-        statusMessageDiv.className = 'p-4 mb-6 text-sm text-blue-800 bg-blue-100 rounded-lg';
-        statusMessageDiv.textContent = `Info: ${message}`;
-        statusMessageDiv.classList.remove('hidden');
-        setTimeout(() => statusMessageDiv.classList.add('hidden'), 5000);
-    } else {
-        console.info("Info:", message);
-    }
-};
-
-/**
- * Esconde o indicador de carregamento e mostra o conteúdo principal.
- */
-const hideLoading = () => {
-    if (loadingIndicator) loadingIndicator.classList.add('hidden');
-    // Mostra os containers principais (métricas e logs recentes)
-    const metricsContainer = document.getElementById('metricas-container');
-    const logsRecentesContainer = document.getElementById('logs-recentes');
-    if (metricsContainer) metricsContainer.classList.remove('hidden');
-    if (logsRecentesContainer) logsRecentesContainer.classList.remove('hidden');
-};
-
-/**
- * Atualiza o texto de um elemento na UI pelo seu ID.
- * @param {string} id O ID do elemento HTML.
- * @param {string|number} value O novo valor a ser exibido.
- */
-const updateElementText = (id, value) => {
-    const element = document.getElementById(id);
-    if (element) {
-        element.textContent = value;
-    } else {
-        console.warn(`Elemento com ID '${id}' não encontrado para atualização.`);
-    }
-};
-
-/**
- * Define o caminho da coleção para os dados privados do usuário no Firestore.
- */
-function getMetricsPath() {
-    if (!userId) return null;
-    return `artifacts/${appId}/users/${userId}/metrics_data`;
-}
-
-/**
- * Gera dados mock de histórico de logs (últimos 30 dias) para inicialização ou fallback.
- */
-function generateMockHistory() {
-    const today = new Date();
-    const history = [];
-    for (let i = 29; i >= 0; i--) {
-        const date = new Date(today);
-        date.setDate(today.getDate() - i);
-        const count = Math.floor(Math.random() * 6);
-        history.push({
-            date: date.toISOString().split('T')[0], // 'YYYY-MM-DD'
-            count: count
-        });
-    }
-    return history;
-}
-
-/**
- * Atualiza os cartões de métricas e o gráfico na UI com os dados fornecidos.
- * @param {Object} metrics Os dados de métricas (do Firestore ou mock).
- */
-function updateDashboardUI(metrics) {
-    const defaultMetrics = {
-        total_logs: 0, 
-        horas_trabalhadas: 0.0, 
-        bugs_corrigidos: 0,   
-        logHistory: generateMockHistory() 
+    /**
+     * Exibe uma mensagem de erro na UI.
+     * @param {string} message Mensagem de erro.
+     */
+    const displayError = (message) => {
+        if (statusMessageDiv) {
+            // Assume classes Bootstrap ou CSS customizado
+            statusMessageDiv.className = 'alert alert-danger p-3 mb-3'; 
+            statusMessageDiv.textContent = `Erro: ${message}`;
+            statusMessageDiv.classList.remove('hidden');
+            setTimeout(() => { 
+                if (statusMessageDiv) statusMessageDiv.classList.add('hidden'); 
+            }, 5000);
+        } else {
+            console.error("Erro:", message); 
+        }
     };
 
-    const data = { ...defaultMetrics, ...metrics };
+    /**
+     * Esconde o indicador de carregamento.
+     */
+    const hideLoading = () => {
+        if (loadingIndicator) loadingIndicator.classList.add('hidden');
+        // Mostra os containers
+        const metricsContainer = document.getElementById('metricas-container');
+        const logsRecentesContainer = document.getElementById('logs-recentes');
+        const userManagementContainer = document.getElementById('user-management-container'); // NOVO
+        if (metricsContainer) metricsContainer.classList.remove('hidden');
+        if (logsRecentesContainer) logsRecentesContainer.classList.remove('hidden');
+        if (userManagementContainer) userManagementContainer.classList.remove('hidden'); // NOVO
+    };
 
-    // Atualiza os elementos HTML com os IDs correspondentes (metric-total-logs, metric-total-bugs, metric-total-horas)
-    updateElementText('metric-total-logs', data.total_logs);
-    updateElementText('metric-total-bugs', data.bugs_corrigidos);
-    // Garante que horas_trabalhadas é numérico antes de formatar
-    updateElementText('metric-total-horas', `${(parseFloat(data.horas_trabalhadas) || 0).toFixed(1)}h`);
+    /**
+     * Atualiza o texto de um elemento na UI pelo seu ID.
+     */
+    const updateElementText = (id, value) => {
+        const element = document.getElementById(id);
+        if (element) element.textContent = value;
+    };
 
-    // Redesenha o gráfico D3.js com os dados de histórico
-    if (typeof d3 !== 'undefined') {
-        drawLogHistory(data.logHistory || generateMockHistory());
-    } else {
-        console.error("D3.js não está carregado. Não é possível desenhar o gráfico.");
+    /**
+     * Atualiza os cartões de métricas na UI.
+     */
+    function updateDashboardUI(metrics) {
+        const data = { 
+            total_logs: 0, 
+            horas_trabalhadas: 0.0, 
+            bugs_corrigidos: 0, 
+            ...metrics 
+        };
+
+        updateElementText('metric-total-logs', data.total_logs);
+        updateElementText('metric-total-bugs', data.bugs_corrigidos);
+        updateElementText('metric-total-horas', `${(parseFloat(data.horas_trabalhadas) || 0).toFixed(1)}h`);
     }
 
-    hideLoading(); // Esconde o indicador de carregamento após tudo ser renderizado
-}
+    /**
+     * Atualiza a seção "Seus Logs Mais Recentes" na UI.
+     */
+    function updateRecentActivitiesUI(logs) {
+        const listElement = document.getElementById('logs-recentes'); 
+        if (!listElement) return;
 
+        listElement.innerHTML = ''; 
 
-/**
- * Atualiza a seção "Seus Logs Mais Recentes" na UI.
- * @param {Array} logs Array de objetos de log (do Firestore).
- */
-function updateRecentActivitiesUI(logs) {
-    const listElement = document.getElementById('logs-recentes'); // Container dos logs recentes
-    if (!listElement) {
-        console.warn("Elemento 'logs-recentes' não encontrado no DOM.");
-        return;
-    }
+        if (!logs || logs.length === 0) {
+            listElement.innerHTML = '<p class="alert alert-warning text-center">Nenhum log recente encontrado para este usuário.</p>';
+            return;
+        }
 
-    listElement.innerHTML = ''; // Limpa o conteúdo anterior
+        logs.slice(0, 5).forEach(log => {
+            const logItem = document.createElement('div');
+            logItem.className = 'metric-card mb-3'; 
+            logItem.style.textAlign = 'left'; 
 
-    if (!logs || logs.length === 0) {
-        listElement.innerHTML = '<p class="alert alert-warning text-center">Nenhum log recente encontrado para este usuário.</p>';
-        return;
-    }
-
-    // Limita a exibição aos 5 logs mais recentes
-    logs.slice(0, 5).forEach(log => {
-        const logItem = document.createElement('div');
-        // Usa classes Bootstrap/Tailwind-like
-        logItem.className = 'p-3 mb-2 bg-white border rounded shadow-sm';
-        
-        // Formata a data (se existir e for um timestamp do Firestore)
-        const logDate = log.dataCriacao && typeof log.dataCriacao.toDate === 'function'
-                        ? log.dataCriacao.toDate().toLocaleDateString('pt-BR')
-                        : 'Data desconhecida';
-        logItem.innerHTML = `
-            <h6 class="mb-1">${log.titulo || 'Log Sem Título'} - <span class="badge bg-secondary">${log.categoria || 'Geral'}</span></h6>
-            <p class="mb-1 small text-muted">${log.descricao ? log.descricao.substring(0, 100) + (log.descricao.length > 100 ? '...' : '') : 'Sem descrição.'}</p>
-            <small>Em: ${logDate}</small>
-        `;
-        listElement.appendChild(logItem);
-    });
-}
-
-
-// ----------------------------------------------------
-// D3.JS VISUALIZATION (Gráfico de Histórico)
-// ----------------------------------------------------
-
-// MARGIN está definida acima
-
-/**
- * Desenha o gráfico de barras do histórico de logs usando D3.js.
- * @param {Array<Object>} data Histórico de logs [{ date: 'YYYY-MM-DD', count: N }]
- */
-function drawLogHistory(data) {
-    if (typeof d3 === 'undefined') return; // Se D3 não estiver carregado, sai.
-
-    currentChartData = data; 
-    const container = document.getElementById('logHistoryChart');
-    const svgElement = d3.select("#chartSvg"); 
-
-    svgElement.selectAll("*").remove();
-
-    if (!container || !data || data.length === 0) {
-        if (container) container.innerHTML = '<p class="text-center text-gray-500">Sem dados de histórico para exibir.</p>';
-        return;
-    }
-
-    // Lógica D3.js para desenhar o gráfico... (Omitida a implementação interna D3 complexa por brevidade)
-
-    const fullWidth = container.clientWidth;
-    const fullHeight = 300; 
-    const width = Math.max(0, fullWidth - MARGIN.left - MARGIN.right); 
-    const height = Math.max(0, fullHeight - MARGIN.top - MARGIN.bottom); 
-
-    if (width <= 0 || height <= 0) return;
-
-    svgElement.attr("width", fullWidth).attr("height", fullHeight);
-
-    const g = svgElement.append("g").attr("transform", `translate(${MARGIN.left},${MARGIN.top})`);
-
-    // 2. Processamento de Dados e Escalas
-    const parseDate = d3.timeParse("%Y-%m-%d");
-    const processedData = data.map(d => ({
-        date: parseDate(d.date),
-        count: +d.count
-    })).filter(d => d.date instanceof Date && !isNaN(d.date));
-
-    if (processedData.length === 0) {
-        if (container) container.innerHTML = '<p class="text-center text-gray-500">Dados de histórico inválidos.</p>';
-        return;
-    }
-
-    // Escala X (Tempo)
-    const x = d3.scaleTime().domain(d3.extent(processedData, d => d.date)).range([0, width]);
-
-    // Escala Y (Contagem)
-    const yMax = d3.max(processedData, d => d.count) || 0;
-    const y = d3.scaleLinear().domain([0, yMax + 1]).range([height, 0]);
-
-    // Largura da Barra
-    const daysInPeriod = processedData.length;
-    let barWidth = daysInPeriod > 0 ? (width / daysInPeriod * 0.8) : 10;
-    barWidth = Math.max(1, barWidth);
-
-    // 3. Eixos e Renderização (Simplificado para evitar repetição de código D3)
-    // O código aqui deve conter as definições de escala, eixos e a renderização das barras...
-}
-
-
-/**
- * Inicia os listeners em tempo real do Firestore para métricas e logs recentes.
- */
-function listenForMetricsData() {
-    if (!db || !userId) {
-        displayError("Firestore DB ou User ID não estão definidos.");
-        hideLoading();
-        return;
-    }
-
-    const metricsPath = getMetricsPath();
-    if (!metricsPath) return;
-    
-    // Caminho: artifacts/{appId}/users/{userId}/metrics_data/summary
-    const metricsSummaryRef = firebase.doc(db, metricsPath, 'summary');
-
-    const unsubscribeSummary = firebase.onSnapshot(metricsSummaryRef, (docSnapshot) => {
-        if (docSnapshot.exists()) {
-            const data = docSnapshot.data();
-            const mappedData = {
-                total_logs: data.totalLogs || 0,
-                horas_trabalhadas: data.totalHoras || 0.0,
-                bugs_corrigidos: data.totalBugs || 0,
-                logHistory: data.logHistory || generateMockHistory()
-            };
-            updateDashboardUI(mappedData);
-        } else {
-            // Documento não existe, inicializa com dados padrão
-            const initialData = { totalLogs: 0, totalHoras: 0.0, totalBugs: 0, logHistory: generateMockHistory() };
-            // Tenta criar o documento inicial no Firestore
-            firebase.setDoc(metricsSummaryRef, initialData, { merge: true }).catch(e => console.error("Erro ao inicializar métricas:", e));
+            const logDate = new Date(log.data_registro).toLocaleDateString('pt-BR');
             
-            updateDashboardUI({ total_logs: initialData.totalLogs, horas_trabalhadas: initialData.totalHoras, bugs_corrigidos: initialData.totalBugs, logHistory: initialData.logHistory }); 
-        }
-    }, (error) => {
-        console.error("Erro no listener do sumário de métricas:", error);
-        displayError("Falha ao carregar o sumário de métricas em tempo real.");
-        hideLoading();
-        updateDashboardUI({}); 
-    });
-
-    // 2. Listener para a Subcoleção de Logs Recentes do Usuário
-    const logsCollectionRef = firebase.collection(db, metricsPath, 'logs');
-    const recentLogsQuery = firebase.query(
-        logsCollectionRef, 
-        firebase.orderBy("dataCriacao", "desc"), 
-        firebase.limit(5)
-    );
-
-    const unsubscribeLogs = firebase.onSnapshot(recentLogsQuery, (snapshot) => {
-        const recentLogs = [];
-        snapshot.forEach((doc) => {
-            recentLogs.push({ id: doc.id, ...doc.data() });
+            logItem.innerHTML = `
+                <h6 class="mb-1">${log.titulo || 'Log Sem Título'} - <span class="badge bg-secondary">${log.categoria || 'Geral'}</span></h6>
+                <p class="mb-1 small text-muted">${log.descricao_do_trabalho ? log.descricao_do_trabalho.substring(0, 100) + '...' : 'Sem descrição.'}</p>
+                <small>Em: ${logDate}</small>
+            `;
+            listElement.appendChild(logItem);
         });
-        updateRecentActivitiesUI(recentLogs);
-    }, (error) => {
-        console.error("Erro no listener de logs recentes:", error);
-        const listElement = document.getElementById('logs-recentes');
-        if(listElement) listElement.innerHTML = '<p class="text-center text-warning small">Não foi possível carregar logs recentes.</p>';
-    });
-    
-    return { unsubscribeSummary, unsubscribeLogs };
-}
-
-
-// ----------------------------------------------------
-// FIREBASE INITIALIZATION E LISTENER DE AUTENTICAÇÃO
-// ----------------------------------------------------
-
-/**
- * Inicializa o Firebase, autentica o usuário e configura listeners.
- */
-async function initFirebase() {
-    // Garante que o objeto firebase global (do CDN) está disponível
-    if (typeof firebase === 'undefined' || !firebase.initializeApp) {
-        displayError("SDK do Firebase não carregado. Verifique os scripts no HTML.");
-        hideLoading();
-        updateDashboardUI({}); 
-        return;
     }
 
-    try {
-        if (Object.keys(firebaseConfig).length === 0) throw new Error("Configuração do Firebase ausente.");
-        
-        // Inicializa Firebase (se já inicializado, pega a instância existente)
-        if (firebase.getApps().length === 0) {
-            app = firebase.initializeApp(firebaseConfig);
-        } else {
-            app = firebase.getApp();
-        }
-        
-        auth = firebase.getAuth(app);
-        db = firebase.getFirestore(app);
-        firebase.setLogLevel('Debug'); 
-        
-        // Listener principal de estado de autenticação
-        firebase.onAuthStateChanged(auth, async (userAuth) => {
-            if (userAuth) {
-                userId = userAuth.uid; 
-                // Injeta nome na UI
-                if (userNameElement && usuario && usuario.nome) {
-                     userNameElement.textContent = usuario.nome;
-                } else if (userNameElement) {
-                     userNameElement.textContent = `Usuário ${userId.substring(0, 8)}...`;
-                }
-                
-                listenForMetricsData();
-                
-            } else {
-                // Usuário não está autenticado no Firebase (redireciona para o login)
-                 window.location.href = '../login/login.html';
-            }
-        });
+    // ----------------------------------------------------
+    // LÓGICA DE DADOS (Fetch da API Node.js/MySQL)
+    // ----------------------------------------------------
 
-        // Autenticação inicial (se fornecido)
-        if (initialAuthToken) {
-            try {
-                // CORREÇÃO: Removendo o prefixo 'firebase.'
-                await firebase.signInWithCustomToken(auth, initialAuthToken);
-            } catch (tokenError) {
-                 console.error("Erro ao autenticar com token inicial:", tokenError);
-            }
+    /**
+     * Busca os dados de métricas e logs recentes do backend.
+     */
+    async function fetchMetricsAndLogs() {
+        if (!userId) {
+            displayError("ID do usuário não encontrado. Não é possível buscar dados.");
+            hideLoading();
+            return;
         }
 
-    } catch (error) {
-        displayError("Falha crítica na inicialização dos serviços. Verifique o console.");
-        hideLoading();
-        updateDashboardUI({});
+        // 1. Buscar Métricas (Total)
+        try {
+            const responseMetrics = await fetch(`${API_URL}/metricas-usuario/${userId}`);
+            if (!responseMetrics.ok) {
+                 const errData = await responseMetrics.json().catch(() => ({}));
+                 throw new Error(errData.message || `Erro HTTP ${responseMetrics.status}`);
+            }
+            const metrics = await responseMetrics.json();
+            updateDashboardUI(metrics); // Atualiza os cards
+        } catch (error) {
+            console.error("Erro ao carregar métricas detalhadas:", error);
+            displayError(`Não foi possível carregar as métricas: ${error.message}`);
+            updateDashboardUI({}); // Mostra 0s se falhar
+        }
+
+        // 2. Buscar Logs Recentes (Filtrados por este usuário)
+        try {
+            const responseLogs = await fetch(`${API_URL}/logs?search=${encodeURIComponent(usuario.nome)}&quantidade=5&userId=${userId}`);
+            if (!responseLogs.ok) {
+                 const errData = await responseLogs.json().catch(() => ({}));
+                 throw new Error(errData.message || `Erro HTTP ${responseLogs.status}`);
+            }
+            const logs = await responseLogs.json();
+            
+            const userLogs = logs.filter(log => log.usuario_nome === usuario.nome);
+            
+            updateRecentActivitiesUI(userLogs); // Atualiza a lista de logs
+
+        } catch (error) {
+            console.error("Erro ao carregar logs recentes:", error);
+             const listElement = document.getElementById('logs-recentes');
+             if(listElement) listElement.innerHTML = '<p class="alert alert-danger text-center small">Não foi possível carregar os logs recentes.</p>';
+        }
+
+        hideLoading(); // Garante que o loading suma
     }
-}
 
-/**
- * Configura o botão de logout.
- */
-function setupLogoutButton() {
-    const btnLogout = document.getElementById('btnLogout'); 
-    if (btnLogout) {
-        btnLogout.addEventListener('click', async () => {
-            try {
-                if (auth) {
-                    // CORREÇÃO: Removendo o prefixo 'firebase.'
-                    await firebase.signOut(auth);
-                }
-                localStorage.removeItem('usuarioLogado'); // Limpa localStorage
+
+    /**
+     * Configura o botão de logout.
+     */
+    function setupLogoutButton() {
+        const btnLogout = document.getElementById('btnLogout'); 
+        if (btnLogout) {
+            btnLogout.addEventListener('click', () => {
+                localStorage.removeItem('usuarioLogado'); 
                 window.location.href = '../login/login.html';
-            } catch (error) {
-                console.error("Erro ao fazer logout:", error);
-                displayError("Não foi possível sair. Tente novamente.");
+            });
+        }
+    }
+
+    // ====================================================
+    // NOVO: LÓGICA DE CRUD DE USUÁRIOS
+    // ====================================================
+    
+    /**
+     * Busca todos os usuários da API e renderiza a tabela.
+     */
+    async function fetchUsers() {
+        if (!userTableBody) return;
+        userTableBody.innerHTML = '<tr><td colspan="4" class="text-center">Carregando usuários...</td></tr>';
+        
+        try {
+            const response = await fetch(`${API_URL}/usuarios`);
+            if (!response.ok) throw new Error("Falha ao buscar usuários.");
+            const users = await response.json();
+            renderUserTable(users);
+        } catch (error) {
+            console.error("Erro ao buscar usuários:", error);
+            userTableBody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Erro ao carregar usuários.</td></tr>';
+        }
+    }
+
+    /**
+     * Renderiza a tabela de usuários no DOM.
+     * @param {Array} users - Lista de usuários.
+     */
+    function renderUserTable(users) {
+        if (!userTableBody) return;
+        userTableBody.innerHTML = ''; // Limpa a tabela
+
+        if (users.length === 0) {
+            userTableBody.innerHTML = '<tr><td colspan="4" class="text-center">Nenhum usuário encontrado.</td></tr>';
+            return;
+        }
+
+        users.forEach(user => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${user.nome}</td>
+                <td>${user.email}</td>
+                <td>
+                    <button class="btn btn-sm btn-warning btn-edit" data-id="${user.id}" data-nome="${user.nome}" data-email="${user.email}">
+                        <i class="fas fa-pencil-alt"></i> Editar
+                    </button>
+                    <button class="btn btn-sm btn-danger btn-delete" data-id="${user.id}" data-nome="${user.nome}">
+                        <i class="fas fa-trash-alt"></i> Excluir
+                    </button>
+                </td>
+            `;
+            userTableBody.appendChild(tr);
+        });
+
+        // Adiciona listeners aos novos botões
+        addUserTableListeners();
+    }
+
+    /**
+     * Adiciona listeners aos botões de Editar e Excluir na tabela.
+     */
+    function addUserTableListeners() {
+        // Botões de Edição
+        document.querySelectorAll('.btn-edit').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const id = e.currentTarget.dataset.id;
+                const nome = e.currentTarget.dataset.nome;
+                const email = e.currentTarget.dataset.email;
+                
+                // Preenche o formulário no modal
+                editingUserId = id;
+                document.getElementById('user-nome').value = nome;
+                document.getElementById('user-email').value = email;
+                document.getElementById('user-senha').value = ''; // Senha não é preenchida por segurança
+                document.getElementById('user-senha').placeholder = 'Deixe em branco para não alterar';
+                
+                userModalTitle.textContent = "Editar Usuário";
+                userModalInstance.show();
+            });
+        });
+
+        // Botões de Exclusão
+        document.querySelectorAll('.btn-delete').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const id = e.currentTarget.dataset.id;
+                const nome = e.currentTarget.dataset.nome;
+                
+                // (O ideal seria usar um modal de confirmação)
+                if (confirm(`Tem certeza que deseja excluir o usuário "${nome}" (ID: ${id})?`)) {
+                    deleteUser(id);
+                }
+            });
+        });
+    }
+
+    /**
+     * Abre o modal para criar um novo usuário.
+     */
+    function openNewUserModal() {
+        editingUserId = null; // Garante que está em modo de criação
+        userForm.reset(); // Limpa o formulário
+        document.getElementById('user-senha').placeholder = 'Senha obrigatória';
+        userModalTitle.textContent = "Adicionar Novo Usuário";
+        userModalInstance.show();
+    }
+
+    /**
+     * Lida com a submissão do formulário de usuário (Criar ou Editar).
+     */
+    async function handleUserSubmit(event) {
+        event.preventDefault();
+        
+        const nome = document.getElementById('user-nome').value;
+        const email = document.getElementById('user-email').value;
+        const senha = document.getElementById('user-senha').value; // Pode estar vazio (se editando)
+
+        let url = '';
+        let method = '';
+        let body = {};
+
+        if (editingUserId) {
+            // Modo de Edição (PUT)
+            url = `${API_URL}/usuarios/${editingUserId}`;
+            method = 'PUT';
+            body = { nome, email };
+            // Só adiciona a senha no corpo se o usuário digitou uma nova
+            if (senha) {
+                body.senha = senha;
             }
-        });
+        } else {
+            // Modo de Criação (POST)
+            url = `${API_URL}/cadastro`;
+            method = 'POST';
+            if (!senha) {
+                displayError("Senha é obrigatória para criar um novo usuário.");
+                return;
+            }
+            body = { nome, email, senha };
+        }
+
+        try {
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                 const errData = await response.json().catch(() => ({}));
+                 throw new Error(errData.message || `Erro ${response.status}`);
+            }
+
+            userModalInstance.hide(); // Esconde o modal
+            fetchUsers(); // Recarrega a tabela de usuários
+
+        } catch (error) {
+            console.error("Erro ao salvar usuário:", error);
+            displayError(`Falha ao salvar usuário: ${error.message}`);
+        }
     }
-}
 
+    /**
+     * Exclui um usuário.
+     */
+    async function deleteUser(id) {
+        try {
+            const response = await fetch(`${API_URL}/usuarios/${id}`, {
+                method: 'DELETE'
+            });
 
-// ----------------------------------------------------
-// INICIALIZAÇÃO DA APLICAÇÃO
-// ----------------------------------------------------
+            if (!response.ok) {
+                 const errData = await response.json().catch(() => ({}));
+                 throw new Error(errData.message || `Erro ${response.status}`);
+            }
 
-// Garante que o DOM esteja pronto antes de inicializar
-if (usuario) {
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', () => {
-            initFirebase();
-            setupLogoutButton();
-        });
-    } else {
-        // Se o DOM já estiver pronto
-        initFirebase();
+            fetchUsers(); // Recarrega a tabela
+
+        } catch (error) {
+            console.error("Erro ao excluir usuário:", error);
+            displayError(`Falha ao excluir usuário: ${error.message}`);
+        }
+    }
+
+    // ----------------------------------------------------
+    // INICIALIZAÇÃO DA APLICAÇÃO
+    // ----------------------------------------------------
+    
+    document.addEventListener('DOMContentLoaded', () => {
+        // Injeta o nome do usuário
+        const userNameElement = document.getElementById('nome-usuario-metricas');
+        if(userNameElement) userNameElement.textContent = usuario.nome;
+
+        // Inicia o carregamento dos dados
+        fetchMetricsAndLogs();
+        fetchUsers(); // NOVO: Carrega a tabela de usuários
+        
+        // Configura o logout
         setupLogoutButton();
-    }
-}
+
+        // NOVO: Configura o Modal Bootstrap e os listeners do CRUD
+        if (userModalEl) {
+             userModalInstance = new bootstrap.Modal(userModalEl);
+        }
+        if (btnOpenUserModal) {
+            btnOpenUserModal.addEventListener('click', openNewUserModal);
+        }
+        if (userForm) {
+            userForm.addEventListener('submit', handleUserSubmit);
+        }
+    });
+
+} // Fim do bloco 'if (usuario)'
+

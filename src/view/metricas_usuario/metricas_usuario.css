@@ -1,51 +1,167 @@
-/* -------------------------------------- */
-/* 1. Estilos Base e Tipografia */
-/* -------------------------------------- */
+/* Importa a fonte (Opcional, mas recomendado) */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
 
-/* Define a fonte 'Inter' para o corpo, complementando o Tailwind CSS. */
-body { 
-    font-family: 'Inter', sans-serif; 
+body.metrics-body {
+    background-color: #f4f7f6; /* Fundo cinza claro */
+    font-family: 'Inter', sans-serif;
+    color: #333;
 }
 
-/* -------------------------------------- */
-/* 2. Estilo do Spinner de Carregamento */
-/* -------------------------------------- */
+.main-container {
+    max-width: 1140px; /* Container Bootstrap 'lg' */
+}
 
-.spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    border-left-color: #3b82f6; /* Tailwind blue-500 */
+/* Oculta elementos por padrão */
+.hidden {
+    display: none;
+}
+
+/* --- Estilos dos Cards de Métricas --- */
+.metric-card {
+    background-color: white;
+    border-radius: 0.75rem; /* 12px */
+    padding: 1.5rem; /* 24px */
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    text-align: center;
+    border: 1px solid #e9ecef;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.07);
+}
+
+.metric-value {
+    font-size: 2.25rem; /* 36px */
+    font-weight: 700;
+    line-height: 1.2;
+    margin-top: 0.5rem;
+}
+
+.metric-icon {
+    font-size: 1.5rem;
+    padding: 0.75rem;
+    width: 50px;
+    height: 50px;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
-    animation: spin 1s linear infinite;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.5rem;
 }
 
-@keyframes spin {
-    to { transform: rotate(360deg); }
+/* Cores dos ícones (Baseado em classes Bootstrap) */
+.icon-logs {
+    background-color: #e0e7ff; /* Fundo Azul claro */
+    color: #0d6efd; /* Azul primário */
+}
+.icon-horas {
+    background-color: #d1e7dd; /* Fundo Verde claro */
+    color: #198754; /* Verde success */
+}
+.icon-bugs {
+    background-color: #f8d7da; /* Fundo Vermelho claro */
+    color: #dc3545; /* Vermelho danger */
 }
 
-/* -------------------------------------- */
-/* 3. Estilos Específicos do D3.js */
-/* -------------------------------------- */
+/* Cores específicas do Bootstrap (para garantir) */
+.text-primary { color: #0d6efd !important; }
+.text-success { color: #198754 !important; }
+.text-danger  { color: #dc3545 !important; }
 
-/* Estilo para as barras do gráfico */
+
+/* --- Estilos dos Logs Recentes --- */
+/* (O JS adiciona a classe .metric-card, mas sobrescrevemos o alinhamento) */
+#logs-recentes .metric-card {
+    text-align: left;
+}
+
+/* Estilo para links de navegação se necessário */
+.navbar .nav-link.active {
+    font-weight: 600;
+}
+
+/* --- Estilos do Gráfico D3.js --- */
+#logHistoryChart {
+    position: relative;
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+    border: 1px solid #e9ecef;
+}
+
+#chartSvg {
+    width: 100%;
+    height: 300px; /* Altura fixa do SVG */
+}
+
+/* Estilo das barras no gráfico */
+.log-bar {
+    fill: #0d6efd; /* Azul */
+    transition: fill 0.2s ease-in-out;
+}
 .log-bar:hover {
-    opacity: 0.8;
-    cursor: pointer;
+    fill: #0b5ed7; /* Azul mais escuro */
+}
+.log-bar-empty {
+    fill: #e5e7eb; /* Cinza claro para dias com 0 logs */
+}
+.log-bar-empty:hover {
+    fill: #d1d5db; /* Cinza médio */
 }
 
-/* Estilo para o Tooltip (Dica flutuante) */
-.tooltip {
+/* Estilo dos eixos D3 */
+.axis-x path, .axis-y path {
+    display: none; /* Oculta a linha principal do eixo */
+}
+.axis-x line, .axis-y line {
+    stroke: #e5e7eb; /* Cor das linhas de grade */
+    stroke-dasharray: 2,2; /* Linhas pontilhadas */
+}
+.axis-x text, .axis-y text {
+    fill: #6c757d; /* Cor do texto dos eixos */
+    font-size: 11px;
+}
+
+/* Estilo do Tooltip D3 */
+.d3-tooltip {
     position: absolute;
     text-align: center;
-    padding: 8px;
-    font: 12px sans-serif;
+    padding: 0.5rem; /* 8px */
+    font-size: 0.75rem; /* 12px */
     background: #333;
     color: white;
-    border: 0px;
     border-radius: 4px;
-    pointer-events: none; /* Garante que o tooltip não atrapalhe os eventos de mouse no gráfico */
+    pointer-events: none; /* Impede o tooltip de bloquear o mouse */
     opacity: 0;
     transition: opacity 0.2s;
-    z-index: 100;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+    z-index: 10;
 }
+
+/* --- Estilos dos Logs Recentes (Container) --- */
+#logs-recentes {
+    max-height: 400px;
+    overflow-y: auto;
+}
+/* Estilo da barra de rolagem (Opcional, mas melhora a aparência) */
+#logs-recentes::-webkit-scrollbar {
+    width: 8px;
+}
+#logs-recentes::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 4px;
+}
+#logs-recentes::-webkit-scrollbar-thumb {
+    background: #ccc;
+    border-radius: 4px;
+}
+#logs-recentes::-webkit-scrollbar-thumb:hover {
+    background: #aaa;
+}
+

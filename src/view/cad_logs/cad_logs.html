@@ -1,112 +1,119 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cadastrar Log de Desenvolvimento</title>
-    <!-- Carregamento do Tailwind CSS (CDN) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Configurações de fonte -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-    </style>
-    <!-- CONEXÃO CSS: Caminho relativo, pois cad_logs.css está na mesma pasta. -->
-    <link rel="stylesheet" href="cad_logs.css"> 
+    
+    <!-- Bootstrap CSS (Necessário para o layout) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+    
+    <!-- Font Awesome (Ícones) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <!-- Seu CSS customizado (para corrigir cores e centralizar) -->
+    <link rel="stylesheet" href="cad_logs.css">
 </head>
-<body class="bg-gray-100 flex items-center justify-center min-h-screen p-4">
+<body class="cad-logs-body">
 
-    <div class="w-full max-w-xl bg-white p-8 rounded-xl shadow-2xl">
-        <h2 class="text-3xl font-bold text-center text-gray-800 mb-6">Novo Log de Dev</h2>
-
-        <div id="auth-status" class="mb-4 text-center text-sm">
-            <p id="user-info" class="text-gray-600"></p>
+    <!-- Navbar simples -->
+    <nav class="navbar navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="../index/index.html">
+                DevHub
+            </a>
+            <a href="../index/index.html" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Voltar ao Dashboard
+            </a>
         </div>
+    </nav>
 
-        <form id="log-form" class="space-y-4">
+    <div class="container d-flex justify-content-center align-items-center">
+        <div class="form-container shadow-lg">
+            <h2 class="form-title">Novo Log de Dev</h2>
+
+            <!-- Mensagem de status (para JS) -->
+            <div id="message-box" class="hidden" role="alert"></div>
             
-            <!-- Título do Log -->
-            <div>
-                <label for="titulo" class="block text-sm font-medium text-gray-700">Título do Log (Obrigatório)</label>
-                <input type="text" id="titulo" name="titulo" required
-                        class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-                        placeholder="Ex: Correção de Bug na AI do Inimigo">
+            <!-- Informação do Usuário (preenchida pelo JS) -->
+            <div id="user-info" class="alert alert-info text-center small p-2">
+                Carregando usuário...
             </div>
 
-            <div class="grid grid-cols-2 gap-4">
-                 <!-- Categoria -->
-                <div>
-                    <label for="categoria" class="block text-sm font-medium text-gray-700">Categoria</label>
-                    <select id="categoria" name="categoria" required
-                             class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out">
-                        <option value="">Selecione...</option>
-                        <option value="Programacao">Programação</option>
-                        <option value="Arte 3D/2D">Arte 3D/2D</option>
-                        <option value="Sound Design">Sound Design</option>
-                        <option value="Design de Nível">Design de Nível</option>
-                        <option value="Documentacao">Documentação</option>
-                    </select>
+            <form id="log-form">
+                
+                <!-- Título do Log (Obrigatório - Correção do erro 'titulo cannot be null') -->
+                <div class="mb-3">
+                    <label for="titulo" class="form-label">Título do Log (Obrigatório)</label>
+                    <input type="text" class="form-control" id="titulo" name="titulo" required
+                           placeholder="Ex: Correção de Bug na AI do Inimigo">
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <!-- Categoria (Obrigatório) -->
+                    <div class="col-md-6">
+                        <label for="categoria" class="form-label">Categoria</label>
+                        <select id="categoria" name="categoria" class="form-select" required>
+                            <option value="" disabled selected>Selecione...</option>
+                            <option value="Programacao">Programação</option>
+                            <option value="Arte 3D/2D">Arte 3D/2D</option>
+                            <option value="Sound Design">Sound Design</option>
+                            <option value="Design de Nível">Design de Nível</option>
+                            <option value="Documentacao">Documentação</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Horas Trabalhadas (Obrigatório) -->
+                    <div class="col-md-6">
+                        <label for="horas_trabalhadas" class="form-label">Horas Trabalhadas</label>
+                        <input type="number" step="0.5" min="0" id="horas_trabalhadas" name="horas_trabalhadas" class="form-control"
+                               placeholder="Ex: 4.5" required>
+                    </div>
+                </div>
+
+                <div class="row g-2 mb-3">
+                    <!-- Linhas de Código (Opcional) -->
+                    <div class="col-md-6">
+                        <label for="linhas_codigo" class="form-label">Linhas de Código</label>
+                        <input type="number" id="linhas_codigo" name="linhas_codigo" class="form-control"
+                               placeholder="Opcional (Ex: 150)">
+                    </div>
+
+                    <!-- Bugs Corrigidos (Opcional) -->
+                    <div class="col-md-6">
+                        <label for="bugs_corrigidos" class="form-label">Bugs Corrigidos</label>
+                        <input type="number" id="bugs_corrigidos" name="bugs_corrigidos" class="form-control"
+                               placeholder="Opcional (Ex: 3)">
+                    </div>
                 </div>
                 
-                <!-- Horas Trabalhadas -->
-                <div>
-                    <label for="horas_trabalhadas" class="block text-sm font-medium text-gray-700">Horas Trabalhadas</label>
-                    <input type="number" step="0.5" id="horas_trabalhadas" name="horas_trabalhadas" required
-                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-                           placeholder="Ex: 4.5">
+                <!-- Descrição (Obrigatório) -->
+                <div class="mb-3">
+                    <label for="descricao" class="form-label">Descrição Detalhada (Obrigatório)</label>
+                    <textarea id="descricao" name="descricao" rows="4" class="form-control"
+                              placeholder="Detalhes sobre o que foi feito..." required></textarea>
                 </div>
-            </div>
-
-            <div class="grid grid-cols-2 gap-4">
-                <!-- Linhas de Código -->
-                <div>
-                    <label for="linhas_codigo" class="block text-sm font-medium text-gray-700">Linhas de Código</label>
-                    <input type="number" id="linhas_codigo" name="linhas_codigo"
-                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-                           placeholder="Opcional">
+                
+                <!-- Data do Log (Opcional - JS usa data atual se vazio) -->
+                 <div class="mb-3">
+                    <label for="data_log" class="form-label">Data do Log (Opcional)</label>
+                    <input type="date" class="form-control" id="data_log" name="data_log">
                 </div>
 
-                <!-- Bugs Corrigidos -->
-                <div>
-                    <label for="bugs_corrigidos" class="block text-sm font-medium text-gray-700">Bugs Corrigidos</label>
-                    <input type="number" id="bugs_corrigidos" name="bugs_corrigidos"
-                           class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150 ease-in-out"
-                           placeholder="Opcional">
+                <!-- Botão de Cadastro -->
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-primary w-100 py-2">
+                        <i class="fas fa-check me-2"></i> Registrar Log
+                    </button>
                 </div>
-            </div>
-            
-            <!-- Descrição (Detalhe) -->
-            <div>
-                <label for="descricao" class="block text-sm font-medium text-gray-700">Descrição Detalhada do Trabalho</label>
-                <textarea id="descricao" name="descricao" rows="4" required
-                              class="mt-1 block w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-blue-500 focus:border-blue-500 resize-none transition duration-150 ease-in-out"
-                              placeholder="Detalhes sobre o que foi feito..."></textarea>
-            </div>
-            
-            <!-- Campo oculto para o ID do Usuário -->
-            <input type="hidden" id="id_usuario" name="id_usuario">
-            <!-- Campo oculto para a data do log, usaremos a data atual no JS -->
-            <input type="hidden" id="data_log" name="data_log">
-
-            <!-- Mensagens de Feedback -->
-            <div id="message-box" class="hidden p-3 rounded-lg text-center text-sm" role="alert"></div>
-
-            <!-- Botão de Cadastro -->
-            <div>
-                <button type="submit"
-                         class="w-full flex justify-center py-3 px-4 border border-transparent rounded-lg shadow-md text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition duration-150 ease-in-out">
-                    Registrar Log
-                </button>
-            </div>
-            
-            <!-- Link de volta (USA CAMINHO ABSOLUTO para Home) -->
-            <div class="text-center mt-4">
-                <a href="/src/view/index/index.html" class="text-sm text-gray-600 hover:text-blue-600 transition duration-150 ease-in-out">← Voltar para a Home</a>
-            </div>
-        </form>
+                
+            </form>
+        </div>
     </div>
 
-    <!-- CONEXÃO JAVASCRIPT: Caminho relativo, pois cad_logs.js está na mesma pasta. -->
+    <!-- Scripts (Bootstrap e JS Local) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
     <script src="cad_logs.js"></script>
 </body>
 </html>
+

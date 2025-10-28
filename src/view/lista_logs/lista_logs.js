@@ -30,28 +30,33 @@ if (!usuarioLogado) {
 
 if (typeof usuario !== 'undefined' && usuario) {
 
+    // URL Base da API (Seu servidor app.js)
+    const API_URL = 'http://localhost:3000';
+
     // Variáveis de estado para controle de paginação e pesquisa
     let paginaAtual = 1;
     const logsPorPagina = 10;
-    let searchTimeout; // Para debounce na pesquisa
+    let searchTimeout; // Para debounce (atraso) na pesquisa
 
     /**
      * Função para exibir mensagens customizadas (substitui alert)
-     * Implementação simplificada para este arquivo (sem modal Bootstrap complexo)
      * @param {string} message - A mensagem a ser exibida.
      * @param {string} type - 'success', 'danger', 'info', 'warning'.
      */
     function displayAlert(message, type = 'danger') {
-        const messageBox = document.getElementById('message-box'); // Assume <div id="message-box"> no HTML
+        // Assume que existe um <div id="message-box"> no HTML
+        const messageBox = document.getElementById('message-box'); 
         if (messageBox) {
             messageBox.textContent = message;
-            messageBox.className = `p-3 rounded-lg text-center text-sm ${type === 'success' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`;
-            messageBox.classList.remove('hidden');
+            // Define a classe de cor (Bootstrap)
+            messageBox.className = `alert alert-${type} text-center`;
+            messageBox.classList.remove('hidden'); // 'hidden' é uma classe que deve ser definida no CSS
             setTimeout(() => {
                  messageBox.classList.add('hidden');
+                 messageBox.textContent = '';
             }, 5000);
         } else {
-            console.error(`ALERTA (${type}):`, message);
+            console.error(`ALERTA (${type}):`, message); // Fallback se o elemento não existir
         }
     }
     
@@ -66,7 +71,7 @@ if (typeof usuario !== 'undefined' && usuario) {
 
     // 2. FUNÇÃO PARA DAR/RETIRAR LIKE
     async function toggleLike(logId, userId) {
-        const url = "http://localhost:3000/likes";
+        const url = `${API_URL}/likes`;
         try {
             // Tenta dar o like primeiro
             let response = await fetch(url, {
@@ -142,7 +147,8 @@ if (typeof usuario !== 'undefined' && usuario) {
         logsFeed.innerHTML = '<div class="alert alert-info text-center">Carregando logs da comunidade...</div>';
 
         // Constrói a URL com paginação e filtros
-        let url = `http://localhost:3000/logs?pagina=${paginaAtual}&quantidade=${logsPorPagina}&userId=${usuario.id}`;
+        // Inclui userId para que o backend possa retornar se o usuário atual curtiu (campo 'usuarioCurtiu')
+        let url = `${API_URL}/logs?pagina=${paginaAtual}&quantidade=${logsPorPagina}&userId=${usuario.id}`;
 
         if (termoPesquisa) {
             url += `&search=${encodeURIComponent(termoPesquisa)}`; // 'search' é o filtro de texto
@@ -155,7 +161,8 @@ if (typeof usuario !== 'undefined' && usuario) {
             const response = await fetch(url);
 
             if (!response.ok) {
-                 throw new Error(`Falha na conexão com o servidor. Status: ${response.status}`);
+                 const errorText = await response.text();
+                 throw new Error(`Falha na conexão com o servidor. Status: ${response.status}. Detalhe: ${errorText}`);
             }
 
             const logs = await response.json();
@@ -164,12 +171,14 @@ if (typeof usuario !== 'undefined' && usuario) {
 
             if (logs.length === 0 && paginaAtual === 1) {
                 logsFeed.innerHTML = '<div class="alert alert-warning text-center">Nenhum log encontrado com os filtros aplicados.</div>';
-                btnProximo.disabled = true;
+                if (btnProximo) btnProximo.disabled = true;
                 return;
             } else if (logs.length === 0) {
                  // Se chegou no fim da lista e tentou avançar
                  paginaAtual--;
-                 carregarLogs(); // Volta para a página anterior
+                 if (paginaAtualEl) paginaAtualEl.textContent = `Página ${paginaAtual}`;
+                 displayAlert("Você já está na última página.", "info");
+                 if (btnProximo) btnProximo.disabled = true;
                  return;
             }
 
@@ -179,39 +188,40 @@ if (typeof usuario !== 'undefined' && usuario) {
 
                 // Verifica se a API retornou a informação se o usuário atual curtiu
                 const isLiked = log.usuarioCurtiu === true;
-                const likeClasses = isLiked ? 'text-danger' : 'text-muted';
-                const heartIcon = isLiked ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+                const likeClass = isLiked ? 'text-danger' : 'text-muted';
+                // Assumindo que o HTML usa Font Awesome (precisa do link no <head>)
+                const heartIcon = isLiked ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>'; 
 
                 const logElement = document.createElement('div');
                 // Adiciona classes para o card (assumindo estilo Bootstrap + CSS customizado)
-                logElement.className = 'log-card bg-white rounded-lg shadow p-5 mb-5 transition duration-150 ease-in-out hover:shadow-md';
+                logElement.className = 'log-card bg-white rounded-lg shadow-sm p-4 mb-3';
                 logElement.innerHTML = `
                     <div class="log-header d-flex align-items-center mb-3">
                         <div class="user-avatar">${avatarInitial}</div>
                         <div>
                             <h6 class="mb-0 fw-bold">${log.usuario_nome || 'Usuário Desconhecido'}</h6>
-                            <span class="text-xs text-muted">${new Date(log.data_registro).toLocaleDateString('pt-BR')}</span>
+                            <span class="small text-muted">${new Date(log.data_registro).toLocaleDateString('pt-BR')}</span>
                         </div>
                     </div>
 
-                    <h5 class="mt-2 mb-2 text-lg font-bold">${log.titulo || 'Log Sem Título'}
+                    <h5 class="mt-2 mb-2 fw-bold">${log.titulo || 'Log Sem Título'}
                         <span class="badge bg-primary ms-2">${log.categoria || 'Sem Categoria'}</span>
                     </h5>
 
-                    <p class="text-sm text-gray-600 mb-3">${log.descricao_do_trabalho || 'Nenhuma descrição fornecida.'}</p>
+                    <p class="small">${log.descricao_do_trabalho || 'Nenhuma descrição fornecida.'}</p>
 
-                    <div class="log-metrics-detail d-flex gap-4 text-xs text-gray-500 border-top pt-2">
+                    <div class="log-metrics-detail d-flex gap-3 small text-muted border-top pt-2 mt-2">
                         <span>🕒 ${horasLog.toFixed(1)}h</span>
                         <span>✍️ ${log.linhas_codigo || 0} linhas</span>
                         <span>🐛 ${log.bugs_corrigidos || 0} bugs corrigidos</span>
                     </div>
 
-                    <div class="log-actions mt-3 d-flex align-items-center space-x-4">
-                        <button class="btn-like btn btn-sm btn-link p-0 ${likeClasses}" data-log-id="${log.id}">
-                            ${heartIcon} <span class="ml-1 text-sm font-medium">${log.likes_count || 0}</span>
+                    <div class="log-actions mt-3 d-flex align-items-center">
+                        <button class="btn btn-sm btn-link p-0 btn-like ${likeClass}" data-log-id="${log.id}">
+                            ${heartIcon} ${log.likes_count || 0}
                         </button>
-                        <button class="btn btn-sm btn-link text-muted p-0 ms-3">
-                           <i class="far fa-comment"></i> <span class="ml-1 text-sm">Comentar</span>
+                        <button class="btn btn-sm btn-link text-muted p-0 ms-3 btn-comment">
+                           <i class="far fa-comment"></i> 0 comentários
                         </button>
                     </div>
                 `;
@@ -242,7 +252,8 @@ if (typeof usuario !== 'undefined' && usuario) {
         const inputSearch = document.getElementById('inputSearch');
 
         if (btnAnterior) {
-            btnAnterior.addEventListener('click', () => {
+            btnAnterior.addEventListener('click', (e) => {
+                e.preventDefault();
                 if (paginaAtual > 1) {
                     paginaAtual--;
                     carregarLogs();
@@ -251,7 +262,8 @@ if (typeof usuario !== 'undefined' && usuario) {
         }
 
         if (btnProximo) {
-            btnProximo.addEventListener('click', () => {
+            btnProximo.addEventListener('click', (e) => {
+                e.preventDefault();
                 paginaAtual++;
                 carregarLogs();
             });
@@ -259,7 +271,6 @@ if (typeof usuario !== 'undefined' && usuario) {
 
         // Evento de Pesquisa (com debounce)
         if (inputSearch) {
-            let searchTimeout;
             inputSearch.addEventListener('input', () => {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(() => {
@@ -279,4 +290,5 @@ if (typeof usuario !== 'undefined' && usuario) {
         }
     });
 
-}
+} // Fim do bloco 'if (usuario)'
+
