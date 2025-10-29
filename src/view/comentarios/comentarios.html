@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Comentários do Log - DevHub</title>
+    
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/css/bootstrap.min.css">
+    <!-- Font Awesome (Ícones) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+    
+    <!-- CSS customizado -->
+    <link rel="stylesheet" href="comentarios.css">
+</head>
+<body class="comentarios-body">
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-light bg-white shadow-sm">
+        <div class="container">
+            <a class="navbar-brand fw-bold text-primary" href="../index/index.html">
+                DevHub - Comentários
+            </a>
+            <a href="../index/index.html" class="btn btn-sm btn-outline-secondary">
+                <i class="fas fa-arrow-left me-1"></i> Voltar ao Dashboard
+            </a>
+        </div>
+    </nav>
+
+    <!-- Container Principal -->
+    <main class="container mt-4">
+        <div class="row justify-content-center">
+            <div class="col-lg-8">
+                
+                <!-- 1. Detalhe do Log (Carregado via JS) -->
+                <div class="log-detalhe-card card shadow-sm mb-4">
+                    <div class="card-body">
+                        <div id="loading-log">
+                            <p class="text-center text-muted">Carregando dados do log...</p>
+                        </div>
+                        <div id="log-detalhe-content" class="hidden">
+                            <h2 class="h5 card-title" id="log-titulo"></h2>
+                            <p class="card-text small text-muted" id="log-descricao"></p>
+                            <span class="badge bg-primary" id="log-categoria"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Formulário para Adicionar Comentário -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Adicionar Comentário</h5>
+                        <form id="comment-form">
+                            <div class="mb-3">
+                                <label for="comentario-texto" class="form-label visually-hidden">Seu comentário</label>
+                                <textarea class="form-control" id="comentario-texto" rows="3" placeholder="Escreva seu comentário aqui..." required></textarea>
+                            </div>
+                            <!-- Mensagem de Status/Erro -->
+                            <div id="message-box" class="hidden small mb-2"></div>
+                            <button type="submit" class="btn btn-success">
+                                <i class="fas fa-paper-plane me-1"></i> Enviar Comentário
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- 3. Lista de Comentários Anteriores -->
+                <h4 class="h5 mb-3">Comentários Anteriores</h4>
+                <div id="lista-comentarios">
+                    <!-- Comentários serão injetados aqui pelo JS -->
+                    <div class="alert alert-info text-center">Carregando comentários...</div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <!-- Scripts -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <!-- Script de Lógica (na mesma pasta) -->
+    <script src="comentarios.js"></script>
+</body>
+</html>

@@ -1,199 +1,115 @@
-/* src/view/index/index.css */
+/*
+ * Estilos para src/view/index/index.html (Dashboard DevHub)
+ * Estes estilos complementam as classes do Bootstrap.
+ */
 
 /* 1. Estilos Gerais e de Layout */
-body {
+body { 
     background-color: #f4f4f4; /* Fundo cinza claro */
     font-family: 'Inter', sans-serif; /* Fonte padrão */
-    color: #212529; /* Cor de texto padrão (escuro) */
-    line-height: 1.6;
 }
 
-.dashboard-container {
-    padding-top: 1.5rem;
-    padding-bottom: 1.5rem;
+.main-container {
+    padding-top: 20px; /* Espaço acima do conteúdo principal */
 }
 
-/* 2. Estilos da Sidebar */
-.sidebar {
-    background-color: #ffffff;
-    padding: 1.5rem;
-    border-radius: 0.5rem;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    margin-bottom: 1.5rem; /* Espaçamento inferior */
+/* 2. Estilos da Sidebar (Esquerda e Direita) */
+.sidebar { 
+    background-color: white;
+    padding: 20px;
+    border-radius: 8px; /* Bordas arredondadas */
+    margin-bottom: 20px; /* Espaço abaixo da sidebar */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Sombra suave */
 }
 
-.sidebar__profile {
-    display: flex;
-    align-items: center;
-    margin-bottom: 1rem;
-}
-
-.sidebar__user-info {
-    flex-grow: 1; /* Ocupa o espaço restante */
-}
-
-.sidebar__user-name {
-    font-weight: bold;
-    font-size: 1rem;
-    margin-bottom: 0.1rem;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-}
-
-.sidebar__user-title {
-    font-size: 0.8rem;
-    color: #6c757d; /* Cinza secundário */
-    margin-bottom: 0;
-}
-
-.sidebar__divider {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    border-top: 1px solid #dee2e6; /* Cinza claro */
-}
-
-.sidebar__section-title {
-    font-size: 0.75rem;
+.sidebar h6 {
+    font-size: 0.75rem; /* Tamanho pequeno para títulos de seção */
     font-weight: 600;
-    color: #6c757d;
+    color: #6c757d; /* Cinza secundário */
     text-transform: uppercase;
     letter-spacing: 0.05em;
-    margin-bottom: 0.75rem;
-    margin-top: 1.5rem; /* Espaço acima dos títulos de seção */
+    margin-bottom: 0.75rem; /* Espaço abaixo do título */
 }
 
-/* Lista de Métricas */
-.metrics-list {
-    list-style: none;
-    padding-left: 0;
-    font-size: 0.875rem; /* Tamanho pequeno */
+.sidebar hr {
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border-top: 1px solid #e9ecef; /* Linha divisória clara */
 }
 
-.metrics-list__item {
-    margin-bottom: 0.5rem;
-    color: #495057; /* Cinza mais escuro */
-}
+/* 3. Estilos dos Cartões de Log (Feed Central) */
 
-.metrics-list__value {
-    font-weight: bold;
-}
-.metrics-list__value--primary { color: #0d6efd; } /* Azul */
-.metrics-list__value--danger { color: #dc3545; } /* Vermelho */
-.metrics-list__value--success { color: #198754; } /* Verde */
-
-/* Lista de Filtros */
-.filter-list {
-    font-size: 0.875rem;
-}
-.filter-list__item {
-    margin-bottom: 0.5rem;
-    display: flex;
-    align-items: center;
-}
-.filter-list__checkbox {
-    margin-right: 0.5rem;
-    cursor: pointer;
-}
-.filter-list__label {
-    margin-bottom: 0; /* Remove margem padrão do Bootstrap */
-    cursor: pointer;
-}
-
-/* 3. Coluna Central (Feed) */
-.btn-create-log {
-    font-weight: 600;
-}
-
-.logs-feed-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1.5rem; /* Espaço entre os cards de log */
-}
-
-/* Card de Log */
-.log-card {
+.log-card { 
     background-color: #ffffff;
-    border-radius: 0.5rem;
-    padding: 1.25rem;
-    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-    border: 1px solid #dee2e6;
-    transition: box-shadow 0.2s ease-in-out, transform 0.2s ease-in-out;
+    border: 1px solid #e9ecef; /* Borda sutil */
+    border-radius: 8px; 
+    padding: 15px; 
+    margin-bottom: 20px; /* Espaço entre os cards */
+    box-shadow: 0 1px 3px rgba(0,0,0,0.03); /* Sombra muito suave */
+    transition: box-shadow 0.2s ease-in-out; /* Efeito suave no hover */
 }
 
 .log-card:hover {
-    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05); /* Sombra um pouco maior no hover */
 }
 
-.log-header {
-    display: flex;
-    align-items: center;
-    margin-bottom: 0.75rem;
+/* Cabeçalho do Log (Avatar e Nome) */
+.log-header { 
+    display: flex; 
+    align-items: center; 
+    margin-bottom: 10px; 
 }
 
-.user-avatar {
-    width: 36px; /* Um pouco menor */
-    height: 36px;
-    border-radius: 50%;
-    background-color: #0d6efd;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+.user-avatar { 
+    width: 40px; 
+    height: 40px; 
+    border-radius: 50%; /* Círculo perfeito */
+    margin-right: 10px; 
+    background-color: #0d6efd; /* Azul primário do Bootstrap */
+    color: white; 
+    display: flex; 
+    align-items: center; 
+    justify-content: center; 
     font-weight: bold;
-    font-size: 0.9rem;
-    margin-right: 0.75rem;
-    flex-shrink: 0;
+    font-size: 1rem; /* Tamanho da inicial */
+    flex-shrink: 0; /* Impede que o avatar encolha */
 }
 
-.log-header h6 { /* Nome */
+.log-header h6 { /* Nome do usuário */
     margin-bottom: 0;
     font-weight: 600;
     font-size: 0.9rem;
 }
+
 .log-header span.small { /* Data */
     font-size: 0.75rem;
-    color: #6c757d;
 }
 
-.log-card h5 { /* Título do Log */
-    font-size: 1.1rem;
-    font-weight: bold;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
+/* Detalhes Métricos do Log */
+.log-metrics-detail { 
+    display: flex; 
+    gap: 15px; /* Espaço entre os ícones/textos */
+    font-size: 0.8rem; /* Tamanho pequeno */
+    margin-bottom: 10px; 
+    color: #6c757d; /* Cinza secundário */
+    padding-top: 10px;
+    border-top: 1px solid #f1f1f1; /* Linha sutil acima */
 }
 
-.log-card p.small { /* Descrição */
-    font-size: 0.875rem;
-    color: #495057;
-    margin-bottom: 0.75rem;
+/* Ações do Log (Like/Comentário) */
+.log-actions { 
+    display: flex; 
+    align-items: center; 
+    gap: 1rem; /* Espaço entre os botões */
+    margin-top: 10px; 
 }
 
-.log-metrics-detail {
-    display: flex;
-    gap: 1rem; /* Espaço entre métricas */
-    font-size: 0.75rem;
-    color: #6c757d;
-    margin-top: 0.75rem;
-    padding-top: 0.75rem;
-    border-top: 1px solid #e9ecef; /* Linha divisória */
-}
-
-.log-actions {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    margin-top: 0.75rem;
-}
-
+/* Estilo do botão de Like */
 .log-actions .btn-like {
-    font-size: 0.9rem; /* Tamanho do ícone/texto */
-    padding: 0; /* Remove padding extra de botões link */
-    transition: color 0.15s ease-in-out; /* Transição suave de cor */
-    background: none; /* Garante fundo transparente */
-    border: none; /* Remove borda */
-    cursor: pointer;
+    font-size: 1rem; /* Tamanho do ícone/texto */
+    padding: 0; 
+    transition: color 0.15s ease-in-out; 
+    text-decoration: none;
 }
 
 .log-actions .btn-like.text-danger {
@@ -201,75 +117,158 @@ body {
 }
 
 .log-actions .btn-like.text-muted {
-     color: #6c757d !important; /* Cinza para não-like */
+    color: #6c757d !important; /* Coração cinza para não curtido */
 }
-
 .log-actions .btn-like:hover {
-     color: #dc3545 !important; /* Sempre vermelho no hover */
+    color: #dc3545 !important; /* Fica vermelho no hover */
 }
 
-.log-actions .btn-comment { /* Botão de Comentário (se for usar) */
+/* Estilo do botão de Comentário */
+.log-actions .btn-comment {
      font-size: 0.85rem;
      padding: 0;
      color: #6c757d;
      text-decoration: none;
-     background: none;
-     border: none;
-     cursor: pointer;
 }
 .log-actions .btn-comment:hover {
     text-decoration: underline;
     color: #0d6efd;
 }
 
-
-/* 4. Sidebar Direita */
-.activity-list, .featured-devs-list {
-    list-style: none;
-    padding-left: 0;
-    font-size: 0.8rem;
-    color: #6c757d;
-}
-.activity-list__item, .featured-devs-list__item {
-    margin-bottom: 0.5rem;
-    line-height: 1.4;
-}
-.activity-list__item .badge {
-    font-size: 0.65rem;
-    vertical-align: middle;
+/* 4. Estilos dos Filtros (Checkbox) */
+#filtro-area .form-check {
+    margin-bottom: 0.5rem; /* Espaço entre os filtros */
 }
 
-/* 5. Mensagens de Alerta/Loading */
-.loading-message, .empty-feed-message {
-    padding: 1rem;
-    text-align: center;
-    color: #6c757d;
-    background-color: #e9ecef;
-    border: 1px solid #dee2e6;
-    border-radius: 0.5rem;
+#filtro-area .form-check-input {
+    cursor: pointer;
 }
 
-/* Spinner (se usar no JS) */
-.spinner {
-    border: 4px solid rgba(0, 0, 0, 0.1);
-    width: 36px;
-    height: 36px;
+/* 5. Estilos da Seção de Comentários */
+.comment-section {
+    margin-top: 15px;
+    padding-top: 15px;
+    border-top: 1px solid #e9ecef; /* Linha divisória */
+}
+
+.comment-list {
+    max-height: 250px; /* Limita a altura da lista de comentários */
+    overflow-y: auto;
+    margin-bottom: 15px;
+    padding-right: 5px; /* Espaço para barra de rolagem */
+}
+
+/* Estilo de cada comentário individual */
+.comment-card {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+    font-size: 0.875rem;
+}
+
+.comment-avatar {
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
-    border-left-color: #0d6efd;
-    animation: spin 1s ease infinite;
-    margin: 2rem auto;
+    background-color: #6c757d; /* Cinza */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+    font-size: 0.8rem;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+.comment-content {
+    background-color: #f8f9fa; /* Fundo cinza claro */
+    padding: 8px 12px;
+    border-radius: 8px;
+    width: 100%;
+    position: relative; /* Necessário para os botões de ação */
 }
+
+.comment-header {
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.comment-header .user-name {
+    font-weight: 600;
+    color: #343a40;
+}
+
+.comment-header .comment-date {
+    color: #6c757d;
+    margin-left: 0.5rem;
+}
+
+.comment-body {
+    color: #212529;
+    white-space: pre-wrap; /* Mantém quebras de linha */
+    word-wrap: break-word; /* Quebra palavras longas */
+}
+
+/* Ações de Edição/Exclusão do Comentário */
+.comment-actions {
+    position: absolute;
+    top: 5px;
+    right: 10px;
+    display: none; /* Oculto por padrão, aparece no hover */
+    gap: 5px;
+}
+.comment-card:hover .comment-actions {
+    display: flex;
+}
+
+.comment-actions .btn-action {
+    background: none;
+    border: none;
+    padding: 0.25rem;
+    cursor: pointer;
+    font-size: 0.75rem;
+    color: #6c757d;
+}
+.comment-actions .btn-action:hover {
+    color: #000;
+}
+.comment-actions .btn-edit-comment:hover {
+    color: #0d6efd; /* Azul */
+}
+.comment-actions .btn-delete-comment:hover {
+    color: #dc3545; /* Vermelho */
+}
+
+/* Formulário de novo comentário */
+.comment-form {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.comment-form .form-control {
+    flex-grow: 1;
+    height: 40px; 
+}
+
+.comment-form .btn-submit-comment {
+    height: 40px;
+    flex-shrink: 0;
+    width: auto; 
+    padding: 0 12px;
+    font-size: 0.9rem;
+}
+
+/* Barra de rolagem customizada (Opcional, WebKit) */
+.comment-list::-webkit-scrollbar { width: 6px; }
+.comment-list::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 3px; }
+.comment-list::-webkit-scrollbar-thumb { background: #ccc; border-radius: 3px; }
+.comment-list::-webkit-scrollbar-thumb:hover { background: #aaa; }
 
 /* 6. Responsividade */
-@media (max-width: 991px) { /* Abaixo de LG */
+@media (max-width: 992px) { /* Breakpoint LG do Bootstrap */
     .sidebar {
-        margin-top: 1rem; /* Adiciona espaço no topo em telas menores */
+        /* Adaptação para telas menores, se necessário */
     }
 }
-
 

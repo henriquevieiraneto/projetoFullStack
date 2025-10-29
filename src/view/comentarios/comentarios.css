@@ -1,0 +1,76 @@
+/* Importa a fonte */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+body.comentarios-body {
+    background-color: #f4f7f6; /* Fundo cinza claro */
+    font-family: 'Inter', sans-serif;
+    color: #333;
+}
+
+/* Oculta elementos */
+.hidden {
+    display: none;
+}
+
+/* Card de Detalhe do Log */
+.log-detalhe-card {
+    border: none;
+}
+
+/* --- Estilos da Lista de Comentários --- */
+#lista-comentarios {
+    max-height: 60vh;
+    overflow-y: auto;
+    padding-right: 10px; /* Espaço para a barra de rolagem */
+}
+
+.comment-card {
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    padding: 1rem;
+    margin-bottom: 1rem;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    border: 1px solid #e9ecef;
+    display: flex;
+    gap: 0.75rem;
+}
+
+.comment-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background-color: #0d6efd; /* Azul primário */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    flex-shrink: 0;
+}
+
+.comment-content {
+    flex-grow: 1;
+}
+
+.comment-header {
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.comment-header .user-name {
+    font-weight: 600;
+    color: #212529;
+}
+
+.comment-header .comment-date {
+    color: #6c757d;
+    margin-left: 0.5rem;
+}
+
+.comment-body {
+    font-size: 0.95rem;
+    color: #333;
+    /* Permite quebra de linha no comentário */
+    white-space: pre-wrap;
+    word-wrap: break-word;
+}

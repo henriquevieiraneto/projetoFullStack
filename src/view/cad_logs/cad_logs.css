@@ -29,13 +29,13 @@ body.cad-logs-body {
     color: #333; /* Cor escura para o título */
 }
 
-/* A CORREÇÃO CRÍTICA para o "Texto Invisível" (visto em image_42a286.png)
-  Força os inputs, selects e placeholders a terem uma cor de texto escura.
+/* * A CORREÇÃO CRÍTICA para o "Texto Invisível" (visto em image_42a286.png)
+ * Força os inputs, selects e placeholders a terem uma cor de texto escura.
 */
 .form-control,
 .form-select {
     color: #212529 !important; /* Texto escuro (preto/cinza escuro) */
-    background-color: #ffffff; /* Fundo branco */
+    background-color: #ffffff !important; /* Fundo branco */
 }
 
 /* Corrigir placeholders (que também estavam invisíveis) */
@@ -50,6 +50,8 @@ body.cad-logs-body {
 .form-select:focus {
     color: #212529;
     background-color: #ffffff;
+    border-color: #86b7fe; /* Cor de foco do Bootstrap */
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
 }
 
 /* Cor do texto para as <option> dentro do <select> */

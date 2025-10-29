@@ -11,7 +11,7 @@
     <!-- Font Awesome (Ícones) -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     
-    <!-- Seu CSS customizado (para corrigir cores e centralizar) -->
+    <!-- CSS customizado (na mesma pasta) -->
     <link rel="stylesheet" href="cad_logs.css">
 </head>
 <body class="cad-logs-body">
@@ -30,7 +30,7 @@
 
     <div class="container d-flex justify-content-center align-items-center">
         <div class="form-container shadow-lg">
-            <h2 class="form-title">Novo Log de Dev</h2>
+            <h2 class="form-title" id="form-title">Novo Log de Dev</h2>
 
             <!-- Mensagem de status (para JS) -->
             <div id="message-box" class="hidden" role="alert"></div>
@@ -42,7 +42,7 @@
 
             <form id="log-form">
                 
-                <!-- Título do Log (Obrigatório - Correção do erro 'titulo cannot be null') -->
+                <!-- Título do Log (Obrigatório) -->
                 <div class="mb-3">
                     <label for="titulo" class="form-label">Título do Log (Obrigatório)</label>
                     <input type="text" class="form-control" id="titulo" name="titulo" required
@@ -102,7 +102,7 @@
 
                 <!-- Botão de Cadastro -->
                 <div class="mt-4">
-                    <button type="submit" class="btn btn-primary w-100 py-2">
+                    <button type="submit" class="btn btn-primary w-100 py-2" id="submit-button">
                         <i class="fas fa-check me-2"></i> Registrar Log
                     </button>
                 </div>
@@ -113,6 +113,7 @@
 
     <!-- Scripts (Bootstrap e JS Local) -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.3/js/bootstrap.bundle.min.js"></script>
+    <!-- Referência ao JS na mesma pasta -->
     <script src="cad_logs.js"></script>
 </body>
 </html>

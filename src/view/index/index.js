@@ -1,5 +1,5 @@
 // --- INÍCIO DA VERIFICAÇÃO DE AUTENTICAÇÃO ---
-// Verifica se o usuário logou (usando a chave salva pelo login.js)
+// (Esta verificação NÃO usa Firebase, apenas localStorage)
 const usuarioLogado = localStorage.getItem('usuarioLogado');
 let usuario; // Variável global para armazenar os dados do usuário logado
 
@@ -46,8 +46,8 @@ if (typeof usuario !== 'undefined' && usuario) {
         const modalTitle = document.getElementById('customAlertTitle');
 
         // Garante que a instância do Modal Bootstrap exista
-        if (typeof bootstrap === 'undefined') {
-            console.error("Bootstrap JS não está carregado. Não é possível mostrar o modal.");
+        if (typeof bootstrap === 'undefined' || !modalElement) {
+            console.error("Bootstrap JS não está carregado ou modal não encontrado. Não é possível mostrar o alerta.");
             return;
         }
         
@@ -81,7 +81,7 @@ if (typeof usuario !== 'undefined' && usuario) {
     }
 
     // -------------------------------------------------------------------------
-    // LÓGICA DO DASHBOARD (MÉTRICAS, LOGS, LIKES, FILTROS)
+    // LÓGICA DO DASHBOARD (MÉTRICAS, LOGS, LIKES, FILTROS, CRUD)
     // -------------------------------------------------------------------------
 
     // 1. LOGOUT
@@ -126,8 +126,10 @@ if (typeof usuario !== 'undefined' && usuario) {
             totalHorasEl.textContent = 'Erro';
         }
     }
+    
+    // 3. FUNÇÕES DE CRUD DE LOGS (Like, Edit, Delete)
 
-    // 3. FUNÇÃO PARA DAR/RETIRAR LIKE
+    // LIKE/DESLIKE
     async function toggleLike(logId, userId) {
         const url = `${API_URL}/likes`;
         try {
@@ -140,7 +142,7 @@ if (typeof usuario !== 'undefined' && usuario) {
 
             if (response.status === 201) { // Like adicionado
                 console.log(`Like adicionado ao log ${logId}`);
-                carregarLogs(getCurrentFilters()); // Recarrega
+                carregarLogs(getCurrentFilters());
                 return;
             }
 
@@ -152,7 +154,7 @@ if (typeof usuario !== 'undefined' && usuario) {
 
                 if (response.ok) { // Deslike bem-sucedido
                     console.log(`Like removido do log ${logId}`);
-                    carregarLogs(getCurrentFilters()); // Recarrega
+                    carregarLogs(getCurrentFilters());
                     return;
                 }
                 throw new Error(`Falha ao retirar like: Status ${response.status}`);
@@ -167,36 +169,10 @@ if (typeof usuario !== 'undefined' && usuario) {
         }
     }
 
-    // 4. ADICIONA EVENT LISTENER NOS BOTÕES DE LIKE
-    function adicionarListenersLike() {
-        if (!usuario || !usuario.id) {
-             console.error("ID do usuário não definido para listeners de like.");
-             return;
-        }
-        const userId = usuario.id;
-        document.querySelectorAll('.btn-like').forEach(button => {
-            // Limpa listeners antigos clonando o nó
-            const newButton = button.cloneNode(true);
-            button.parentNode.replaceChild(newButton, button);
-
-            newButton.addEventListener('click', function() {
-                const logId = parseInt(this.getAttribute('data-log-id'));
-                if (logId && userId) {
-                    toggleLike(logId, userId);
-                } else {
-                    displayAlert("Erro: ID do Log ou ID do Usuário ausente.");
-                }
-            });
-        });
-    }
-    
-    // 5. FUNÇÕES DE EDIÇÃO E EXCLUSÃO DE LOG
-    
     // INICIAR EDIÇÃO
     function iniciarEdicao(logId) {
         console.log(`Iniciando edição do log ${logId}`);
         // Redireciona para cad_logs.html passando o ID como parâmetro de URL
-        // O cad_logs.js saberá ler este parâmetro
         window.location.href = `../cad_logs/cad_logs.html?editId=${logId}`;
     }
 
@@ -223,7 +199,6 @@ if (typeof usuario !== 'undefined' && usuario) {
         
         modalFooter.appendChild(confirmDeleteBtn);
 
-        // Handler para o clique de confirmação
         async function handleConfirm() {
             try {
                 const response = await fetch(`${API_URL}/logs/${logId}`, {
@@ -241,7 +216,8 @@ if (typeof usuario !== 'undefined' && usuario) {
                 displayAlert(error.message);
             } finally {
                 // Limpa o modal
-                bootstrap.Modal.getInstance(modalElement).hide();
+                const modalInstance = bootstrap.Modal.getInstance(modalElement);
+                if (modalInstance) modalInstance.hide();
             }
         }
         
@@ -252,11 +228,238 @@ if (typeof usuario !== 'undefined' && usuario) {
             confirmDeleteBtn.remove();
             if(closeButton) closeButton.style.display = 'inline-block';
             if(confirmButton) confirmButton.style.display = 'inline-block';
-            confirmDeleteBtn.removeEventListener('click', handleConfirm);
         }, { once: true });
     }
 
-    // 6. ADICIONA LISTENERS DE CRUD (Like, Edit, Delete)
+    // 4. LÓGICA DE COMENTÁRIOS (CRUD)
+
+    /**
+     * Busca e exibe os comentários para um log específico
+     */
+    async function carregarEExibirComentarios(logId, commentListElement) {
+        commentListElement.innerHTML = '<p class="small text-center text-muted">Carregando comentários...</p>';
+        
+        try {
+            const response = await fetch(`${API_URL}/logs/${logId}/comentarios`);
+            if (!response.ok) throw new Error("Falha ao buscar comentários.");
+            
+            const comentarios = await response.json();
+            
+            if (comentarios.length === 0) {
+                commentListElement.innerHTML = '<p class="small text-center text-muted">Nenhum comentário ainda.</p>';
+                return;
+            }
+
+            commentListElement.innerHTML = ''; 
+            
+            comentarios.forEach(comment => {
+                const avatarInitial = (comment.usuario_nome ? comment.usuario_nome.charAt(0) : '?').toUpperCase();
+                const commentDate = new Date(comment.data_comentario).toLocaleString('pt-BR', { timeStyle: 'short', dateStyle: 'short'});
+
+                // Botões de ação do comentário (Editar/Excluir)
+                let commentActions = '';
+                if (comment.id_usuario === usuario.id) {
+                    commentActions = `
+                        <div class="comment-actions">
+                            <button class="btn-action btn-edit-comment" data-comment-id="${comment.id}" title="Editar">
+                                <i class="fas fa-pencil-alt"></i>
+                            </button>
+                            <button class="btn-action btn-delete-comment" data-comment-id="${comment.id}" title="Excluir">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+
+                const commentEl = document.createElement('div');
+                commentEl.className = 'comment-card';
+                commentEl.innerHTML = `
+                    <div class="comment-avatar">${avatarInitial}</div>
+                    <div class="comment-content">
+                        ${commentActions}
+                        <div class="comment-header">
+                            <span class="user-name">${comment.usuario_nome || 'Usuário'}</span>
+                            <span class="comment-date small">${commentDate}</span>
+                        </div>
+                        <p class="comment-body" id="comment-body-${comment.id}">${comment.comentario}</p>
+                    </div>
+                `;
+                commentListElement.appendChild(commentEl);
+            });
+
+            // Adiciona listeners aos botões de editar/excluir comentários
+            adicionarListenersComentariosCRUD(logId);
+
+        } catch (error) {
+            console.error("Erro ao carregar comentários:", error);
+            commentListElement.innerHTML = '<p class="small text-center text-danger">Erro ao carregar comentários.</p>';
+        }
+    }
+
+    /**
+     * Lida com o envio de um novo comentário
+     */
+    async function handleCommentSubmit(event) {
+        event.preventDefault();
+        const form = event.target;
+        const logId = form.dataset.logId;
+        const input = form.querySelector('.comment-input');
+        const comentario = input.value.trim();
+        const btn = form.querySelector('.btn-submit-comment');
+
+        if (!comentario || !logId) return;
+        btn.disabled = true;
+
+        try {
+            const response = await fetch(`${API_URL}/logs/${logId}/comentarios`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id_usuario: usuario.id,
+                    comentario: comentario
+                })
+            });
+
+            if (!response.ok) {
+                const data = await response.json().catch(() => ({}));
+                throw new Error(data.message || "Erro ao enviar comentário.");
+            }
+
+            input.value = ''; 
+            // Recarrega os logs (para atualizar a contagem de comentários no card principal)
+            carregarLogs(getCurrentFilters()); 
+            
+        } catch (error) {
+            console.error("Erro ao enviar comentário:", error);
+            displayAlert(`Erro ao enviar comentário: ${error.message}`);
+        } finally {
+            btn.disabled = false;
+        }
+    }
+
+    /**
+     * Lida com o clique em "Editar Comentário"
+     */
+    async function handleEditComment(commentId, logId) {
+        const commentBodyEl = document.getElementById(`comment-body-${commentId}`);
+        if (!commentBodyEl) return;
+        
+        const currentText = commentBodyEl.textContent;
+        
+        // (Solução com Prompt)
+        const novoTexto = prompt("Edite seu comentário:", currentText);
+
+        if (novoTexto && novoTexto.trim() !== '' && novoTexto !== currentText) {
+            // Tenta atualizar no backend
+            try {
+                const response = await fetch(`${API_URL}/comentarios/${commentId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        comentario: novoTexto,
+                        id_usuario: usuario.id // Envia o ID do usuário para verificação no backend
+                    })
+                });
+                
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || "Erro ao editar comentário.");
+
+                // Sucesso: Recarrega a seção de comentários
+                const commentListElement = document.getElementById(`comment-list-${logId}`);
+                if (commentListElement) {
+                    carregarEExibirComentarios(logId, commentListElement);
+                }
+
+            } catch (error) {
+                console.error("Erro ao editar comentário:", error);
+                displayAlert(`Falha ao editar: ${error.message}`);
+            }
+        }
+    }
+    
+    /**
+     * Lida com o clique em "Excluir Comentário"
+     */
+    async function handleDeleteComment(commentId, logId) {
+        // Reutiliza o modal de alerta para confirmação
+        displayAlert("Tem certeza que deseja excluir este comentário?", 'danger');
+        
+        const modalElement = document.getElementById('customAlertModal');
+        const confirmButton = modalElement.querySelector('.btn-primary'); 
+        const closeButton = modalElement.querySelector('.btn-secondary');
+        const modalFooter = modalElement.querySelector('.modal-footer');
+        
+        // Cria o botão de confirmação de exclusão
+        const confirmDeleteBtn = document.createElement('button');
+        confirmDeleteBtn.type = 'button';
+        confirmDeleteBtn.className = 'btn btn-danger';
+        confirmDeleteBtn.textContent = 'Confirmar Exclusão';
+        
+        if(closeButton) closeButton.style.display = 'none';
+        if(confirmButton) confirmButton.style.display = 'none';
+        modalFooter.appendChild(confirmDeleteBtn);
+
+        async function handleConfirm() {
+            try {
+                const response = await fetch(`${API_URL}/comentarios/${commentId}`, {
+                    method: "DELETE",
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id_usuario: usuario.id }) // Envia ID para segurança
+                });
+                
+                const data = await response.json();
+                if (!response.ok) throw new Error(data.message || "Erro ao excluir comentário.");
+                
+                displayAlert(data.message || "Comentário excluído!", "success");
+                
+                // Recarrega os logs (para atualizar a contagem de comentários no card principal)
+                carregarLogs(getCurrentFilters()); 
+
+            } catch (error) {
+                console.error("Erro ao excluir comentário:", error);
+                displayAlert(error.message);
+            } finally {
+                bootstrap.Modal.getInstance(modalElement).hide();
+            }
+        }
+        
+        confirmDeleteBtn.addEventListener('click', handleConfirm, { once: true });
+
+        modalElement.addEventListener('hidden.bs.modal', () => {
+            confirmDeleteBtn.remove();
+            if(closeButton) closeButton.style.display = 'inline-block';
+            if(confirmButton) confirmButton.style.display = 'inline-block';
+        }, { once: true });
+    }
+
+    /**
+     * Adiciona listeners aos botões de CRUD dos comentários
+     */
+    function adicionarListenersComentariosCRUD(logId) {
+         if (!usuario || !usuario.id) return;
+
+        // Listeners de Edição de Comentário
+        document.querySelectorAll(`#comment-list-${logId} .btn-edit-comment`).forEach(button => {
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+            newButton.addEventListener('click', function() {
+                const commentId = parseInt(this.dataset.commentId);
+                handleEditComment(commentId, logId);
+            });
+        });
+        
+        // Listeners de Exclusão de Comentário
+        document.querySelectorAll(`#comment-list-${logId} .btn-delete-comment`).forEach(button => {
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+            newButton.addEventListener('click', function() {
+                const commentId = parseInt(this.dataset.commentId);
+                handleDeleteComment(commentId, logId);
+            });
+        });
+    }
+
+    // 5. ADICIONA LISTENERS (Like, Edit Log, Delete Log, Toggle Comentários, Submit Comentário)
     function adicionarListenersCards() {
         if (!usuario || !usuario.id) return;
         const currentUserId = usuario.id;
@@ -288,24 +491,53 @@ if (typeof usuario !== 'undefined' && usuario) {
                 excluirLog(logId, logTitulo);
             });
         });
+
+        // Adiciona listeners para Abrir/Fechar Comentários
+        document.querySelectorAll('.btn-comment').forEach(button => {
+            const newButton = button.cloneNode(true);
+            button.parentNode.replaceChild(newButton, button);
+            newButton.addEventListener('click', function(e) {
+                e.preventDefault();
+                const logId = this.dataset.logId;
+                const section = document.getElementById(`comments-section-${logId}`);
+                const list = document.getElementById(`comment-list-${logId}`);
+                
+                if (section && list) {
+                    // Alterna a visibilidade
+                    const isHidden = section.style.display === 'none' || section.style.display === '';
+                    section.style.display = isHidden ? 'block' : 'none';
+                    
+                    // Se estiver abrindo, carrega os comentários
+                    if (isHidden) {
+                        carregarEExibirComentarios(logId, list);
+                    }
+                }
+            });
+        });
+
+        // Adiciona listeners para Forms de Comentário
+        document.querySelectorAll('.comment-form').forEach(form => {
+            // Remove listener antigo se houver (embora cloneNode deva resolver)
+            form.removeEventListener('submit', handleCommentSubmit);
+            form.addEventListener('submit', handleCommentSubmit);
+        });
     }
 
-    // 7. FUNÇÃO AUXILIAR PARA OBTER OS FILTROS ATUAIS
+    // 6. FUNÇÃO AUXILIAR PARA OBTER OS FILTROS ATUAIS
     function getCurrentFilters() {
         const checkboxes = document.querySelectorAll('#filtro-area input[type="checkbox"]:checked');
         return Array.from(checkboxes).map(cb => cb.value);
     }
 
-    // 8. FUNÇÃO PRINCIPAL PARA CARREGAR O FEED DE LOGS (com filtros)
+    // 7. FUNÇÃO PRINCIPAL PARA CARREGAR O FEED DE LOGS
     async function carregarLogs(filtros = []) {
         const logsFeed = document.getElementById('logs-feed');
-        if (!logsFeed) {
-            console.error("Elemento 'logs-feed' não encontrado.");
-            return;
-        }
+        if (!logsFeed) return;
+        
         logsFeed.innerHTML = '<div class="alert alert-info text-center">Carregando logs...</div>';
 
-        let url = `${API_URL}/logs?pagina=1&quantidade=10&userId=${usuario.id}`;
+        // O app.js (Rota 11) agora inclui comentarios_count
+        let url = `${API_URL}/logs?pagina=1&quantidade=10&userId=${userId}`;
 
         if (filtros.length > 0) {
             url += `&categoria=${encodeURIComponent(filtros[0])}`;
@@ -313,29 +545,26 @@ if (typeof usuario !== 'undefined' && usuario) {
 
         try {
             const response = await fetch(url);
-            if (!response.ok) {
-                const errorText = await response.text();
-                throw new Error(`Falha ao buscar logs. Status: ${response.status}. Detalhe: ${errorText}`);
-            }
+            if (!response.ok) throw new Error('Falha na conexão com o servidor.');
 
             const logs = await response.json();
             logsFeed.innerHTML = ''; 
 
             if (logs.length === 0) {
-                logsFeed.innerHTML = '<div class="alert alert-warning text-center">Nenhum log encontrado. Ajuste seus filtros ou crie um!</div>';
+                logsFeed.innerHTML = '<div class="alert alert-warning text-center">Nenhum log encontrado. Crie um!</div>';
                 return;
             }
 
             logs.forEach(log => {
                 const horasLog = parseFloat(log.horas_trabalhadas) || 0;
                 const avatarInitial = (log.usuario_nome ? log.usuario_nome.charAt(0) : '?').toUpperCase();
-
+                
                 const isLiked = log.usuarioCurtiu === true;
                 const likeClass = isLiked ? 'text-danger' : 'text-muted';
                 const heartIcon = isLiked ? '<i class="fas fa-heart"></i>' : '<i class="far fa-heart"></i>';
+                
+                const commentCount = log.comentarios_count || 0;
 
-                // Define se os botões de Editar/Excluir devem aparecer
-                // Compara o ID do usuário logado (armazenado na var 'usuario') com o ID do autor do log
                 const botoesAdmin = (usuario.id === log.id_usuario) 
                     ? `
                         <button class="btn btn-sm btn-link text-warning p-0 ms-3 btn-edit" title="Editar Log" data-log-id="${log.id}">
@@ -345,7 +574,7 @@ if (typeof usuario !== 'undefined' && usuario) {
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     ` 
-                    : ''; // Se não for o dono, não mostra os botões
+                    : ''; 
 
                 const logElement = document.createElement('div');
                 logElement.className = 'log-card'; 
@@ -356,7 +585,6 @@ if (typeof usuario !== 'undefined' && usuario) {
                             <h6 class="mb-0 fw-bold">${log.usuario_nome || 'Usuário Desconhecido'}</h6>
                             <span class="small text-muted">${new Date(log.data_registro).toLocaleDateString('pt-BR')}</span>
                         </div>
-                        <!-- Botões de Admin (Editar/Excluir) aparecem aqui -->
                         <div class="ms-auto">
                             ${botoesAdmin}
                         </div>
@@ -378,23 +606,36 @@ if (typeof usuario !== 'undefined' && usuario) {
                         <button class="btn btn-sm btn-link p-0 btn-like ${likeClass}" data-log-id="${log.id}">
                             ${heartIcon} ${log.likes_count || 0}
                         </button>
-                        <button class="btn btn-sm btn-link text-muted p-0 ms-3 btn-comment">
-                           <i class="far fa-comment"></i> 0 comentários
+                        <button class="btn btn-sm btn-link text-muted p-0 ms-3 btn-comment" data-log-id="${log.id}">
+                           <i class="far fa-comment"></i> ${commentCount} comentários
                         </button>
+                    </div>
+
+                    <!-- Seção de Comentários (Oculta) -->
+                    <div class="comment-section" id="comments-section-${log.id}" style="display: none;">
+                        <div class="comment-list" id="comment-list-${log.id}">
+                            <!-- Comentários serão carregados aqui -->
+                        </div>
+                        <form class="comment-form" data-log-id="${log.id}">
+                            <input type="text" class="form-control form-control-sm comment-input" placeholder="Escreva um comentário..." required>
+                            <button type="submit" class="btn btn-sm btn-primary btn-submit-comment">
+                                <i class="fas fa-paper-plane"></i>
+                            </button>
+                        </form>
                     </div>
                 `;
                 logsFeed.appendChild(logElement);
             });
 
-            adicionarListenersCards(); // Atualizado para incluir Edit/Delete
+            adicionarListenersCards(); // Atualizado para incluir Edit/Delete/Comentários
 
         } catch (error) {
             console.error("Erro ao carregar logs:", error);
-            logsFeed.innerHTML = '<div class="alert alert-danger text-center">Falha ao carregar o feed. Verifique se o servidor está rodando e conectado ao banco.</div>';
+            logsFeed.innerHTML = '<div class="alert alert-danger text-center">Falha ao carregar o feed. Verifique se o servidor está rodando.</div>';
         }
     }
 
-    // 9. FUNÇÃO PARA APLICAR FILTROS (Permite apenas 1 filtro por vez)
+    // 8. FUNÇÃO PARA APLICAR FILTROS
     function aplicarFiltros(event) {
         const checkboxes = document.querySelectorAll('#filtro-area input[type="checkbox"]');
         const changedCheckbox = event.target;
@@ -411,31 +652,19 @@ if (typeof usuario !== 'undefined' && usuario) {
 
     // --- INICIALIZAÇÃO DA PÁGINA ---
     document.addEventListener('DOMContentLoaded', () => {
-        // Garante que 'usuario' está definido
-        if (!usuario) {
-            console.error("Usuário não definido no DOMContentLoaded.");
-            return;
-        }
-
-        // Injeta o nome do usuário
+        if (!usuario) return; 
+        
         const usuarioNomeEl = document.getElementById('usuarioNome');
         if (usuarioNomeEl) {
             usuarioNomeEl.textContent = usuario.nome;
-            // Atualiza o avatar
              const initials = (usuario.nome ? usuario.nome.charAt(0) : '?').toUpperCase();
              const sidebarAvatar = document.querySelector('.sidebar .user-avatar');
              if(sidebarAvatar) sidebarAvatar.textContent = initials;
-        } else {
-            console.warn("Elemento 'usuarioNome' não encontrado.");
         }
 
-        const userId = usuario.id;
-
-        // Carrega os dados iniciais
         carregarMetricas(userId);
-        carregarLogs(); // Sem filtros iniciais
+        carregarLogs(); // Carga inicial
         
-        // Adiciona listeners para filtros
         document.querySelectorAll('#filtro-area input[type="checkbox"]').forEach(checkbox => {
             checkbox.addEventListener('change', aplicarFiltros);
         });

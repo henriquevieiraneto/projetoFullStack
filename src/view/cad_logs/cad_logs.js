@@ -34,22 +34,29 @@ if (typeof usuario !== 'undefined' && usuario) {
     const API_URL = 'http://localhost:3000';
     let editingLogId = null; // Controla se estamos editando ou criando
 
+    // Referências do DOM
+    const formLog = document.getElementById('log-form');
+    const messageBox = document.getElementById('message-box');
+    const userInfoElement = document.getElementById('user-info');
+    const formTitle = document.getElementById('form-title');
+    const submitButton = document.getElementById('submit-button');
+
     /**
      * Função para exibir mensagens na UI (substitui alert).
      * @param {string} message - A mensagem a ser exibida.
      * @param {string} type - 'success', 'danger', 'info', 'warning'.
      */
     function displayMessage(message, type = 'danger') {
-        const messageBox = document.getElementById('message-box'); // ID da div de mensagem no HTML
         if (messageBox) {
             messageBox.textContent = message;
             // Define a classe de cor (Bootstrap)
             messageBox.className = `p-3 rounded-lg text-center text-sm ${
                 type === 'success' ? 'alert alert-success' :
-                type === 'info' ? 'alert alert-info' :
+                type ==='info' ? 'alert alert-info' :
+                type === 'warning' ? 'alert alert-warning' :
                 'alert alert-danger' 
             }`;
-            messageBox.classList.remove('hidden'); // 'hidden' é uma classe que deve ser definida no CSS
+            messageBox.classList.remove('hidden'); 
             // Remove a mensagem após 5 segundos
             setTimeout(() => {
                 if (messageBox) {
@@ -58,7 +65,7 @@ if (typeof usuario !== 'undefined' && usuario) {
                 }
             }, 5000);
         } else {
-            console.error(`ALERTA (${type}): ${message}`); // Fallback para console
+            console.error(`ALERTA (${type}): ${message}`); // Fallback
         }
     }
 
@@ -67,37 +74,31 @@ if (typeof usuario !== 'undefined' && usuario) {
      * @param {Event} event - O evento de submit.
      */
     async function handleLogSubmit(event) {
-        event.preventDefault(); // Impede o refresh da página
-
-        const btnSubmit = event.target.querySelector('button[type="submit"]');
+        event.preventDefault(); 
 
         // Coleta todos os dados do formulário (IDs dos inputs no cad_logs.html)
         const dadosLog = {
             titulo: document.getElementById('titulo').value,
             categoria: document.getElementById('categoria').value,
             horas_trabalhadas: document.getElementById('horas_trabalhadas').value,
-            // Campos opcionais, envia 0 se vazios
             linhas_codigo: document.getElementById('linhas_codigo').value || 0,
             bugs_corrigidos: document.getElementById('bugs_corrigidos').value || 0,
-            // Mapeia o campo 'descricao' do HTML para 'descricao_do_trabalho' do Backend
             descricao_do_trabalho: document.getElementById('descricao').value,
-            // Adiciona ID do usuário logado
             id_usuario: usuario.id,
-            // Adiciona a data (O app.js foi corrigido para aceitar 'data_log' ou 'data_registro')
-            data_log: document.getElementById('data_log').value || new Date().toISOString().split('T')[0] // Formato YYYY-MM-DD
+            data_log: document.getElementById('data_log').value || new Date().toISOString().split('T')[0] 
         };
 
         console.log("Dados do Log a serem enviados:", dadosLog);
 
-        // Validação simples
+        // Validação
         if (!dadosLog.titulo || !dadosLog.categoria || !dadosLog.horas_trabalhadas || !dadosLog.descricao_do_trabalho) {
              displayMessage("Preencha todos os campos obrigatórios (Título, Categoria, Horas, Descrição).", "warning");
              return;
         }
 
         // Feedback visual e trava botão
-        btnSubmit.disabled = true;
-        btnSubmit.innerHTML = 'Salvando...'; // Remove o ícone se não estiver usando Font Awesome
+        submitButton.disabled = true;
+        submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Salvando...';
         displayMessage("Enviando log para o servidor...", "info");
 
         // Define a URL e o Método (POST para criar, PUT para editar)
@@ -132,13 +133,11 @@ if (typeof usuario !== 'undefined' && usuario) {
 
                 // REDIRECIONAMENTO PARA O DASHBOARD APÓS SUCESSO
                 setTimeout(() => {
-                    // Caminho absoluto para a pasta index
                     window.location.href = '../index/index.html';
-                }, 1000); // Atraso de 1 segundo para o usuário ler a mensagem
+                }, 1000); 
 
             } else {
                 // Erro do servidor (4xx, 5xx)
-                // O app.js envia 'errorDetail' com a mensagem do MySQL
                 const errorMessage = responseData.errorDetail || responseData.message || `Erro desconhecido (Status ${response.status}).`;
                 displayMessage(`Falha no registro: ${errorMessage}`, "danger");
                 console.error("Erro detalhado do servidor:", responseData);
@@ -150,8 +149,10 @@ if (typeof usuario !== 'undefined' && usuario) {
             displayMessage(`Falha na conexão com o servidor. Verifique se o Node.js está rodando.`, "danger");
         } finally {
             // Reabilita o botão
-            btnSubmit.disabled = false;
-            btnSubmit.innerHTML = editingLogId ? 'Salvar Alterações' : 'Registrar Log';
+            submitButton.disabled = false;
+            submitButton.innerHTML = editingLogId 
+                ? '<i class="fas fa-save me-2"></i> Salvar Alterações' 
+                : '<i class="fas fa-check me-2"></i> Registrar Log';
         }
     }
     
@@ -173,7 +174,7 @@ if (typeof usuario !== 'undefined' && usuario) {
         // Busca os dados completos do log no backend
         displayMessage("Carregando dados do log para edição...", "info");
         try {
-            const response = await fetch(`${API_URL}/logs/${logId}`); // Usa a nova rota GET /logs/:id
+            const response = await fetch(`${API_URL}/logs/${logId}`); // Usa a rota GET /logs/:id
             if (!response.ok) {
                  const errData = await response.json().catch(() => ({}));
                  throw new Error(errData.message || `Erro HTTP ${response.status}`);
@@ -182,7 +183,8 @@ if (typeof usuario !== 'undefined' && usuario) {
             const logData = await response.json();
             
             // Verifica se o usuário logado é o dono do log (SEGURANÇA)
-            if (logData.id_usuario !== usuario.id) {
+            // (Convertendo ambos para número para garantir a comparação)
+            if (Number(logData.id_usuario) !== Number(usuario.id)) {
                 displayMessage("Erro: Você não tem permissão para editar este log.", "danger");
                 setTimeout(() => window.location.href = '../index/index.html', 2000);
                 return;
@@ -196,14 +198,15 @@ if (typeof usuario !== 'undefined' && usuario) {
             document.getElementById('bugs_corrigidos').value = logData.bugs_corrigidos || 0;
             document.getElementById('descricao').value = logData.descricao_do_trabalho || '';
             
-            // Formata a data (MySQL 'data_registro' é YYYY-MM-DDTHH:MM:SS.sssZ, o input <date> quer YYYY-MM-DD)
-            if (logData.data_registro) {
-                document.getElementById('data_log').value = new Date(logData.data_registro).toISOString().split('T')[0];
+            // Formata a data (data_log ou data_registro)
+            const dataParaInput = logData.data_log || logData.data_registro;
+            if (dataParaInput) {
+                document.getElementById('data_log').value = new Date(dataParaInput).toISOString().split('T')[0];
             }
 
             // Atualiza a UI para o modo de edição
-            document.querySelector('.form-title').textContent = "Editar Log";
-            document.querySelector('button[type="submit"]').innerHTML = '<i class="fas fa-save me-2"></i> Salvar Alterações';
+            if(formTitle) formTitle.textContent = "Editar Log";
+            if(submitButton) submitButton.innerHTML = '<i class="fas fa-save me-2"></i> Salvar Alterações';
             
             displayMessage("Dados do log carregados. Pronto para editar.", "success");
 
@@ -216,9 +219,7 @@ if (typeof usuario !== 'undefined' && usuario) {
 
     // --- INICIALIZAÇÃO DA PÁGINA ---
     document.addEventListener('DOMContentLoaded', () => {
-         const formLog = document.getElementById('log-form'); // ID do formulário no HTML
-         const userInfoElement = document.getElementById('user-info'); // Onde mostrar info do user
-
+         // Define o nome do usuário na UI
          if(userInfoElement && usuario.nome){
              userInfoElement.textContent = `Registrando log para: ${usuario.nome}`;
          }
