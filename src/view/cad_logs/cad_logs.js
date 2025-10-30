@@ -42,7 +42,7 @@ if (typeof usuario !== 'undefined' && usuario) {
     const submitButton = document.getElementById('submit-button');
 
     /**
-     * Função para exibir mensagens na UI (substitui alert).
+     * Exibe mensagens na UI (substitui alert).
      * @param {string} message - A mensagem a ser exibida.
      * @param {string} type - 'success', 'danger', 'info', 'warning'.
      */
@@ -52,11 +52,11 @@ if (typeof usuario !== 'undefined' && usuario) {
             // Define a classe de cor (Bootstrap)
             messageBox.className = `p-3 rounded-lg text-center text-sm ${
                 type === 'success' ? 'alert alert-success' :
-                type ==='info' ? 'alert alert-info' :
+                type === 'info' ? 'alert alert-info' :
                 type === 'warning' ? 'alert alert-warning' :
                 'alert alert-danger' 
             }`;
-            messageBox.classList.remove('hidden'); 
+            messageBox.classList.remove('hidden'); // 'hidden' é uma classe que deve ser definida no CSS
             // Remove a mensagem após 5 segundos
             setTimeout(() => {
                 if (messageBox) {
@@ -74,9 +74,10 @@ if (typeof usuario !== 'undefined' && usuario) {
      * @param {Event} event - O evento de submit.
      */
     async function handleLogSubmit(event) {
-        event.preventDefault(); 
+        event.preventDefault(); // Impede o refresh da página
 
-        // Coleta todos os dados do formulário (IDs dos inputs no cad_logs.html)
+        // Coleta todos os dados do formulário
+        // CORREÇÃO: Não enviamos 'data_log'
         const dadosLog = {
             titulo: document.getElementById('titulo').value,
             categoria: document.getElementById('categoria').value,
@@ -84,8 +85,8 @@ if (typeof usuario !== 'undefined' && usuario) {
             linhas_codigo: document.getElementById('linhas_codigo').value || 0,
             bugs_corrigidos: document.getElementById('bugs_corrigidos').value || 0,
             descricao_do_trabalho: document.getElementById('descricao').value,
-            id_usuario: usuario.id,
-            data_log: document.getElementById('data_log').value || new Date().toISOString().split('T')[0] 
+            id_usuario: usuario.id
+            // O campo data_log foi REMOVIDO para corrigir o erro 'Unknown column'
         };
 
         console.log("Dados do Log a serem enviados:", dadosLog);
@@ -101,13 +102,17 @@ if (typeof usuario !== 'undefined' && usuario) {
         submitButton.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Salvando...';
         displayMessage("Enviando log para o servidor...", "info");
 
-        // Define a URL e o Método (POST para criar, PUT para editar)
         let url = `${API_URL}/logs`;
         let method = 'POST';
 
         if (editingLogId) {
             url = `${API_URL}/logs/${editingLogId}`;
             method = 'PUT';
+            // Se estiver editando, precisamos enviar a data original de volta
+            // ou o app.js (PUT) irá falhar se esperar 'data_log'
+            // Vamos adicionar a data de volta APENAS se estiver editando
+            const dataOriginal = document.getElementById('data_log_hidden')?.value; // Pega de um campo oculto se necessário
+            dadosLog.data_log = dataOriginal || new Date().toISOString().split('T')[0];
         }
 
         try {
@@ -140,7 +145,6 @@ if (typeof usuario !== 'undefined' && usuario) {
                 // Erro do servidor (4xx, 5xx)
                 const errorMessage = responseData.errorDetail || responseData.message || `Erro desconhecido (Status ${response.status}).`;
                 displayMessage(`Falha no registro: ${errorMessage}`, "danger");
-                console.error("Erro detalhado do servidor:", responseData);
             }
 
         } catch (error) {
@@ -161,20 +165,19 @@ if (typeof usuario !== 'undefined' && usuario) {
      */
     async function checkForEditMode() {
         const urlParams = new URLSearchParams(window.location.search);
-        const logId = urlParams.get('editId'); // Pega o ID da URL
+        const logId = urlParams.get('editId'); 
 
         if (!logId) {
             console.log("Modo: Novo Log.");
-            return; // Não está em modo de edição
+            return; 
         }
         
         console.log("Modo: Edição de Log. ID:", logId);
-        editingLogId = logId; // Define o ID global de edição
+        editingLogId = logId; 
 
-        // Busca os dados completos do log no backend
         displayMessage("Carregando dados do log para edição...", "info");
         try {
-            const response = await fetch(`${API_URL}/logs/${logId}`); // Usa a rota GET /logs/:id
+            const response = await fetch(`${API_URL}/logs/${logId}`); 
             if (!response.ok) {
                  const errData = await response.json().catch(() => ({}));
                  throw new Error(errData.message || `Erro HTTP ${response.status}`);
@@ -182,15 +185,14 @@ if (typeof usuario !== 'undefined' && usuario) {
             
             const logData = await response.json();
             
-            // Verifica se o usuário logado é o dono do log (SEGURANÇA)
-            // (Convertendo ambos para número para garantir a comparação)
+            // Segurança: Verifica se o usuário logado é o dono do log
             if (Number(logData.id_usuario) !== Number(usuario.id)) {
                 displayMessage("Erro: Você não tem permissão para editar este log.", "danger");
                 setTimeout(() => window.location.href = '../index/index.html', 2000);
                 return;
             }
 
-            // Preenche o formulário com os dados do log
+            // Preenche o formulário
             document.getElementById('titulo').value = logData.titulo || '';
             document.getElementById('categoria').value = logData.categoria || '';
             document.getElementById('horas_trabalhadas').value = logData.horas_trabalhadas || 0;
@@ -198,10 +200,15 @@ if (typeof usuario !== 'undefined' && usuario) {
             document.getElementById('bugs_corrigidos').value = logData.bugs_corrigidos || 0;
             document.getElementById('descricao').value = logData.descricao_do_trabalho || '';
             
-            // Formata a data (data_log ou data_registro)
-            const dataParaInput = logData.data_log || logData.data_registro;
-            if (dataParaInput) {
-                document.getElementById('data_log').value = new Date(dataParaInput).toISOString().split('T')[0];
+            // Armazena a data original (mesmo que o campo não exista mais no HTML visível)
+            // para que possamos enviá-la de volta no PUT
+            const dataOriginal = logData.data_registro || logData.data_log;
+            if(dataOriginal) {
+                const hiddenInput = document.createElement('input');
+                hiddenInput.type = 'hidden';
+                hiddenInput.id = 'data_log_hidden';
+                hiddenInput.value = new Date(dataOriginal).toISOString().split('T')[0];
+                formLog.appendChild(hiddenInput);
             }
 
             // Atualiza a UI para o modo de edição
@@ -213,7 +220,7 @@ if (typeof usuario !== 'undefined' && usuario) {
         } catch (error) {
             console.error("Erro ao carregar dados para edição:", error);
             displayMessage(`Não foi possível carregar os dados do log: ${error.message}`, "danger");
-            editingLogId = null; // Reseta o modo de edição se falhar
+            editingLogId = null; 
         }
     }
 

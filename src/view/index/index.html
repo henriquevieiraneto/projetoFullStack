@@ -42,6 +42,7 @@
             <aside class="col-lg-3 mb-4 mb-lg-0">
                 <div class="sidebar bg-white rounded shadow-sm p-4">
                     <div class="d-flex align-items-center mb-3">
+                         <!-- O JS preenche a inicial no avatar -->
                          <div class="user-avatar flex-shrink-0 me-3">?</div>
                          <div>
                             <h5 id="usuarioNome" class="fw-bold text-truncate mb-0 fs-6">Carregando...</h5>
@@ -83,9 +84,18 @@
                     + Criar Novo Log
                 </a>
                 
+                <!-- O JS (index.js) injetará os logs aqui -->
                 <div id="logs-feed">
                     <div class="alert alert-info text-center">Carregando logs...</div>
                 </div>
+                
+                <!-- Controles de Paginação (O JS injetará os botões aqui) -->
+                <nav aria-label="Navegação do Feed" class="mt-4 d-flex justify-content-center">
+                    <ul class="pagination" id="pagination-controls">
+                        <!-- Ex: <li class="page-item"><a class="page-link" href="#">1</a></li> -->
+                    </ul>
+                </nav>
+                
             </section>
 
             <!-- SIDEBAR DIREITA: Atividade Recente e Destaques -->
@@ -122,7 +132,10 @@
             <p id="customAlertMessage"></p>
           </div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">OK</button>
+            <!-- Botão OK padrão (escondido durante exclusão) -->
+            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">OK</button>
+            <!-- Botão Cancelar padrão (usado por confirmações) -->
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
           </div>
         </div>
       </div>

@@ -6,7 +6,8 @@
 /* 1. Estilos Gerais e de Layout */
 body { 
     background-color: #f4f4f4; /* Fundo cinza claro */
-    font-family: 'Inter', sans-serif; /* Fonte padrão */
+    /* A fonte 'Inter' é carregada via Google Fonts no HTML */
+    font-family: 'Inter', sans-serif; 
 }
 
 .main-container {
@@ -20,6 +21,7 @@ body {
     border-radius: 8px; /* Bordas arredondadas */
     margin-bottom: 20px; /* Espaço abaixo da sidebar */
     box-shadow: 0 2px 4px rgba(0,0,0,0.05); /* Sombra suave */
+    border: 1px solid #e9ecef;
 }
 
 .sidebar h6 {
@@ -270,5 +272,63 @@ body {
     .sidebar {
         /* Adaptação para telas menores, se necessário */
     }
+}
+
+/* 7. ESTILOS DE PAGINAÇÃO (CSS PURO) */
+.pagination {
+    display: flex;
+    padding-left: 0;
+    list-style: none;
+    border-radius: 0.375rem;
+    justify-content: center; /* Centraliza a paginação */
+}
+
+.page-item {
+    /* Espaçamento entre os botões */
+}
+
+.page-link {
+    position: relative;
+    display: block;
+    padding: 0.5rem 0.75rem;
+    margin-left: -1px; /* Junta as bordas */
+    line-height: 1.25;
+    color: #0d6efd; /* Cor primária do link */
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+    text-decoration: none;
+    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out;
+    cursor: pointer;
+}
+
+.page-link:hover {
+    z-index: 2;
+    color: #0a58ca;
+    background-color: #e9ecef;
+    border-color: #dee2e6;
+}
+
+.page-item.active .page-link {
+    z-index: 3;
+    color: #fff;
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+.page-item.disabled .page-link {
+    color: #6c757d;
+    pointer-events: none;
+    background-color: #fff;
+    border-color: #dee2e6;
+}
+
+/* Ajusta as bordas arredondadas do primeiro e último item */
+.page-item:first-child .page-link {
+    border-top-left-radius: 0.375rem;
+    border-bottom-left-radius: 0.375rem;
+}
+.page-item:last-child .page-link {
+    border-top-right-radius: 0.375rem;
+    border-bottom-right-radius: 0.375rem;
 }
 
